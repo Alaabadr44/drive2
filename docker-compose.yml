@@ -64,9 +64,10 @@ services:
   # Frontend Service
   frontend:
     build: ./frontend
-    ports:
-      - "8080:80"
-      # - "8443:443" # Optional if you want to expose frontend directly via HTTPS too, but usually via main nginx
+    expose:
+      - "80"
+    # ports:
+    #   - "8080:80" # Removed to force usage of Main Nginx (SSL)
     restart: always
     networks:
       - kiosk-network
