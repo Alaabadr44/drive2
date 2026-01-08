@@ -163,7 +163,7 @@ async function seed() {
                     const destFileName = `${savedRestaurant.id}_logo${path.extname(ext)}`;
                     fs.copyFileSync(srcPath, path.join(uploadsDir, destFileName));
                     // Remove leading slash to avoid double slash issue
-                    logoUrl = `uploads/restaurants/${destFileName}`;
+                    logoUrl = `/uploads/restaurants/${destFileName}`;
                     foundLogo = true;
                     console.log(`\t📸 Found Logo: ${ext}`);
                     break;
@@ -201,7 +201,7 @@ async function seed() {
                     const srcPath = path.join(restaurantPath, menuFile);
                     const destFileName = `${savedRestaurant.id}_${menuFile.replace(/\s+/g, '_')}`; // Clean filename
                     fs.copyFileSync(srcPath, path.join(uploadsDir, destFileName));
-                    const menuUrl = `uploads/restaurants/${destFileName}`;
+                    const menuUrl = `/uploads/restaurants/${destFileName}`;
 
                     const menu = menuRepository.create({
                         restaurantId: savedRestaurant.id,
