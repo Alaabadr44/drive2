@@ -72,9 +72,10 @@ echo "Select Build Option:"
 echo "1) 🎨 Frontend Only  (Safe, keeps data)"
 echo "2) ⚙️  Backend Only   (Re-seeds database!)"
 echo "3) 🚀 Full Rebuild   (Re-seeds database!)"
-echo "4) 🚪 Exit           (Do nothing)"
+echo "4) � Restart All    (No Build, Fast)"
+echo "5) �🚪 Exit           (Do nothing)"
 echo "---------------------------------------"
-read -r -p "Enter choice [1-4]: " choice
+read -r -p "Enter choice [1-5]: " choice
 
 # Check if docker-compose exists, otherwise use "docker compose"
 DOCKER_CMD="docker compose"
@@ -101,7 +102,11 @@ case "$choice" in
         $USE_SUDO $DOCKER_CMD up -d --force-recreate --build
         ;;
     4)
-        echo "👋 Exiting."
+        echo "� Restarting Services..."
+        $USE_SUDO $DOCKER_CMD restart
+        ;;
+    5)
+        echo "�👋 Exiting."
         exit 0
         ;;
     *)
