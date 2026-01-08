@@ -34,9 +34,36 @@ if ! docker info > /dev/null 2>&1; then
     USE_SUDO="sudo"
 fi
 
+# Interactive Menu
+echo "---------------------------------------"
+echo "Select Build Option:"
+echo "1) 🎨 Frontend Only  (Safe, keeps data)"
+echo "2) ⚙️  Backend Only   (Re-seeds database!)"
+echo "3) 🚀 Full Rebuild   (Re-seeds database!)"
+echo "---------------------------------------"
+read -r -p "Enter choice [1-3]: " choice
+
 # Check if docker-compose exists, otherwise use "docker compose"
+DOCKER_CMD="docker compose"
 if command -v docker-compose &> /dev/null; then
-    $USE_SUDO docker-compose up -d --build
-else
-    $USE_SUDO docker compose up -d --build
+    DOCKER_CMD="docker-compose"
 fi
+
+case "$choice" in
+    1)
+        echo "🎨 Building Frontend..."
+        $USE_SUDO $DOCKER_CMD up -d --build frontend
+        ;;
+    2)
+        echo "⚙️  Building Backend..."
+        $USE_SUDO $DOCKER_CMD up -d --build backend
+        ;;
+    3)
+        echo "🚀 Full Rebuild..."
+        $USE_SUDO $DOCKER_CMD up -d --build
+        ;;
+    *)
+        echo "❌ Invalid choice. Exiting."
+        exit 1
+        ;;
+esac
