@@ -26,6 +26,14 @@ echo "✅ Detected Local IP: $HOST_IP"
 # Generate Self-Signed SSL Certificates for this IP
 echo "🔒 Generating SSL Certificates for $HOST_IP..."
 mkdir -p backend/nginx/ssl
+
+# Check for openssl
+if ! command -v openssl &> /dev/null; then
+    echo "❌ Error: 'openssl' is not installed. Cannot generate SSL certificates."
+    echo "   Please install openssl (e.g. sudo apt install openssl)"
+    exit 1
+fi
+
 openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
   -keyout backend/nginx/ssl/server.key \
   -out backend/nginx/ssl/server.crt \
@@ -35,6 +43,13 @@ openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
   -keyout backend/nginx/ssl/server.key \
   -out backend/nginx/ssl/server.crt \
   -subj "/CN=$HOST_IP" 2>/dev/null
+
+# Verify Certificates Exist
+if [ ! -f "backend/nginx/ssl/server.crt" ] || [ ! -f "backend/nginx/ssl/server.key" ]; then
+    echo "❌ Error: SSL Certificate generation failed!"
+    exit 1
+fi
+echo "✅ SSL Certificates ready."
 
 echo "🚀 Starting Docker Compose with APP_URL=https://$HOST_IP"
 
