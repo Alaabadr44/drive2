@@ -40,8 +40,9 @@ echo "Select Build Option:"
 echo "1) 🎨 Frontend Only  (Safe, keeps data)"
 echo "2) ⚙️  Backend Only   (Re-seeds database!)"
 echo "3) 🚀 Full Rebuild   (Re-seeds database!)"
+echo "4) 🚪 Exit           (Do nothing)"
 echo "---------------------------------------"
-read -r -p "Enter choice [1-3]: " choice
+read -r -p "Enter choice [1-4]: " choice
 
 # Check if docker-compose exists, otherwise use "docker compose"
 DOCKER_CMD="docker compose"
@@ -61,6 +62,10 @@ case "$choice" in
     3)
         echo "🚀 Full Rebuild..."
         $USE_SUDO $DOCKER_CMD up -d --build
+        ;;
+    4)
+        echo "👋 Exiting."
+        exit 0
         ;;
     *)
         echo "❌ Invalid choice. Exiting."
