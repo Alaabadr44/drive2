@@ -33,4 +33,4 @@ yarn-error.log*
 
 # Project specific
 backend/uploads/
-backend/TENANTS/
+
