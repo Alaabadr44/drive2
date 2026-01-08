@@ -30,10 +30,17 @@ const AdminGroup = () => (
   </ProtectedRoute>
 );
 
+import { useEffect } from 'react';
+
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
+const App = () => {
+  useEffect(() => {
+    document.title = "Drive 2";
+  }, []);
+
+  return (
+    <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <Toaster />
       <Sonner />

@@ -107,3 +107,18 @@ case "$choice" in
         exit 1
         ;;
 esac
+
+echo "⏳ Waiting for services to stabilize..."
+sleep 5
+
+echo "📊 Container Status:"
+$USE_SUDO docker ps
+
+# Check if nginx is running
+if ! $USE_SUDO docker ps | grep -q "nginx"; then
+    echo "❌ Error: Nginx container is NOT running!"
+    echo "📜 Nginx Logs:"
+    $USE_SUDO docker logs drive2-nginx-1
+fi
+
+echo "✅ Done! Access at https://$HOST_IP"
