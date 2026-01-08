@@ -67,11 +67,13 @@ fi
 case "$choice" in
     1)
         echo "🎨 Building Frontend..."
-        $USE_SUDO $DOCKER_CMD up -d --build frontend
+        # We start nginx too to ensure it picks up new SSL certs
+        $USE_SUDO $DOCKER_CMD up -d --build frontend nginx
         ;;
     2)
         echo "⚙️  Building Backend..."
-        $USE_SUDO $DOCKER_CMD up -d --build backend
+        # We start nginx too to ensure it picks up new SSL certs
+        $USE_SUDO $DOCKER_CMD up -d --build backend nginx
         ;;
     3)
         echo "🚀 Full Rebuild..."
