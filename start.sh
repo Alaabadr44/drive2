@@ -25,6 +25,7 @@ echo "✅ Detected Local IP: $HOST_IP"
 
 # Generate Self-Signed SSL Certificates for this IP
 echo "🔒 Generating SSL Certificates for $HOST_IP..."
+rm -rf backend/nginx/ssl
 mkdir -p backend/nginx/ssl
 
 # Check for openssl
