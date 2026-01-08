@@ -4,24 +4,26 @@
 OS="$(uname)"
 HOST_IP=""
 
-if [ "$OS" = "Darwin" ]; then
-    # macOS
-    HOST_IP=$(ipconfig getifaddr en0)
-    # If en0 is empty (e.g. using WiFi on en1 or other), try to find any inet that isn't localhost
-    if [ -z "$HOST_IP" ]; then
-        HOST_IP=$(ifconfig | grep "inet " | grep -v 127.0.0.1 | awk '{print $2}' | head -n 1)
-    fi
+# IP Detection Table
+echo "---------------------------------------"
+echo "📡 Available IP Addresses:"
+hostname -I | tr ' ' '\n' | grep -v '^$' | nl -w2 -s') '
+echo "---------------------------------------"
+read -r -p "Enter the Number of the IP to use (or type a manual IP): " ip_choice
+
+# Logic to pick IP
+detected_ips=($(hostname -I))
+if [[ "$ip_choice" =~ ^[0-9]+$ ]] && [ "$ip_choice" -le "${#detected_ips[@]}" ] && [ "$ip_choice" -gt 0 ]; then
+    HOST_IP=${detected_ips[$((ip_choice-1))]}
+elif [[ "$ip_choice" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+    HOST_IP=$ip_choice
 else
-    # Linux (Raspberry Pi, Ubuntu, etc.)
-    HOST_IP=$(hostname -I | awk '{print $1}')
+    # Default to first IP if invalid
+    HOST_IP=${detected_ips[0]}
+    echo "⚠️  Invalid choice. Defaulting to $HOST_IP"
 fi
 
-if [ -z "$HOST_IP" ]; then
-    echo "❌ Could not detect Local IP. Please set HOST_IP manually."
-    exit 1
-fi
-
-echo "✅ Detected Local IP: $HOST_IP"
+echo "✅ Selected IP: $HOST_IP"
 
 # Generate Self-Signed SSL Certificates for this IP
 echo "🔒 Generating SSL Certificates for $HOST_IP..."
