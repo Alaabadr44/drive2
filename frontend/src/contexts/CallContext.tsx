@@ -47,6 +47,8 @@ export const CallProvider = ({ children }: { children: ReactNode }) => {
   
   // Store the other party's ID for signaling
   const [targetId, setTargetId] = useState<string | null>(null);
+  const targetIdRef = useRef<string | null>(null);
+  const incomingCallDataRef = useRef<{ callId: string; restaurantId?: string; kioskId?: string } | null>(null);
 
   const peerConnection = useRef<RTCPeerConnection | null>(null);
   const localStream = useRef<MediaStream | null>(null);
@@ -88,6 +90,14 @@ export const CallProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     callStateRef.current = callState;
   }, [callState]);
+
+  useEffect(() => {
+    targetIdRef.current = targetId;
+  }, [targetId]);
+
+  useEffect(() => {
+    incomingCallDataRef.current = incomingCallData;
+  }, [incomingCallData]);
 
   // --- Recording Logic ---
   const startRecording = useCallback(async (remoteStream: MediaStream) => {
@@ -491,8 +501,16 @@ export const CallProvider = ({ children }: { children: ReactNode }) => {
     // 3. Call Accepted (Join Room & Initiate WebRTC)
     socket.on('call:accepted', async (data: { callId: string }) => {
         setCallState('incall');
-        const currentTargetId = targetId; // Should be set from initiateCall (Screen) or acceptCall (Restaurant)
         
+        // Use Ref to ensure we get the latest targetId even if state update is pending
+        // Fallback: If Restaurant, use incomingCallDataRef
+        let currentTargetId = targetIdRef.current;
+        
+        if (!currentTargetId && user?.role === 'RESTAURANT' && incomingCallDataRef.current?.kioskId) {
+             console.log("CallContext: targetId missing in state, using incomingCallDataRef");
+             currentTargetId = incomingCallDataRef.current.kioskId;
+        }
+
         console.log("CallContext: call:accepted. Role:", user?.role, "Target:", currentTargetId);
 
         if (callId && currentTargetId) {
@@ -513,6 +531,8 @@ export const CallProvider = ({ children }: { children: ReactNode }) => {
                   targetType: 'restaurant'
                 });
             }
+        } else {
+             console.warn("CallContext: Cannot setup peer connection. Missing callId or targetId", { callId, currentTargetId });
         }
     });
 
