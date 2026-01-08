@@ -9,13 +9,13 @@ services:
       - PORT=3000
       - REDIS_URL=redis://redis:6379
       - DATABASE_URL=postgres://postgres:postgres@postgres:5432/kiosk_db
-      - APP_URL=https://192.168.1.182
+      - APP_URL=https://${HOST_IP}
       # Add other environment variables here or use env_file
     depends_on:
       - redis
       - postgres
     volumes:
-      - ./backend/TENANTS:/app/TENANTS
+      # - ./backend/TENANTS:/app/TENANTS # Commented out to use image data
       - ./backend/public/uploads:/app/public/uploads
     restart: unless-stopped
     networks:
