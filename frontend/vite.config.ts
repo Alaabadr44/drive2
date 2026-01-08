@@ -29,7 +29,7 @@ export default defineConfig(({ mode }) => ({
   plugins: [
     react(), 
     basicSsl(), // Add SSL plugin
-    mode === "development" && componentTagger()
+    // mode === "development" && componentTagger() 
   ].filter(Boolean),
   resolve: {
     alias: {
