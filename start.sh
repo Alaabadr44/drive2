@@ -27,9 +27,16 @@ echo "🚀 Starting Docker Compose with APP_URL=https://$HOST_IP"
 # Export the variable so docker-compose can see it
 export HOST_IP=$HOST_IP
 
+# Check if user has docker permissions
+USE_SUDO=""
+if ! docker info > /dev/null 2>&1; then
+    echo "⚠️  Docker permission denied. Retrying with sudo..."
+    USE_SUDO="sudo"
+fi
+
 # Check if docker-compose exists, otherwise use "docker compose"
 if command -v docker-compose &> /dev/null; then
-    docker-compose up -d --build
+    $USE_SUDO docker-compose up -d --build
 else
-    docker compose up -d --build
+    $USE_SUDO docker compose up -d --build
 fi
