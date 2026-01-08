@@ -430,9 +430,8 @@ export const CallProvider = ({ children }: { children: ReactNode }) => {
     // As Restaurant, target is the kiosk
     if (incomingCallData.kioskId) {
         setTargetId(incomingCallData.kioskId);
-        
-        // Initialize WebRTC as Callee (non-initiator initially, waiting for offer)
-        setupPeerConnection(currentCallId, incomingCallData.kioskId);
+        // We do NOT setup connection here anymore to avoid race conditions.
+        // We wait for call:accepted event which fires for both parties.
     }
     
     socket.emit('call:accept', { callId: currentCallId });
@@ -489,15 +488,20 @@ export const CallProvider = ({ children }: { children: ReactNode }) => {
         setCallState('ringing');
     });
 
-    // 3. Call Accepted (Screen)
+    // 3. Call Accepted (Join Room & Initiate WebRTC)
     socket.on('call:accepted', async (data: { callId: string }) => {
         setCallState('incall');
-        const currentTargetId = targetId; // Should be set from initiateCall
+        const currentTargetId = targetId; // Should be set from initiateCall (Screen) or acceptCall (Restaurant)
         
+        console.log("CallContext: call:accepted. Role:", user?.role, "Target:", currentTargetId);
+
         if (callId && currentTargetId) {
             const pc = await setupPeerConnection(callId, currentTargetId);
-            if (pc) {
-                // Screen creates Offer
+            
+            // Only SCREEN creates the offer (Caller)
+            // Restaurant (Callee) waits for the offer
+            if (pc && user?.role === 'SCREEN') {
+                console.log("CallContext: I am SCREEN, creating offer...");
                 const offer = await pc.createOffer();
                 await pc.setLocalDescription(offer);
                 
