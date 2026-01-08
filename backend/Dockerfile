@@ -28,6 +28,7 @@ RUN npm ci --only=production
 
 # Copy built files from builder stage
 COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/TENANTS ./TENANTS
 
 # Copy other necessary folders if they exist (like uploads)
 # COPY --from=builder /app/uploads ./uploads
