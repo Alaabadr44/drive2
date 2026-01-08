@@ -82,9 +82,11 @@ fi
 
 case "$choice" in
     1)
-        echo "🎨 Building Frontend..."
-        # We start nginx too to ensure it picks up new SSL certs
-        $USE_SUDO $DOCKER_CMD up -d --build frontend nginx
+        echo "🎨 Building Frontend (No Cache)..."
+        # Force rebuild of frontend to ensure new index.html is picked up
+        $USE_SUDO $DOCKER_CMD build --no-cache frontend
+        # Start nginx and frontend
+        $USE_SUDO $DOCKER_CMD up -d frontend nginx
         ;;
     2)
         echo "⚙️  Building Backend..."
