@@ -82,20 +82,21 @@ fi
 
 case "$choice" in
     1)
-        echo "🎨 Building Frontend (No Cache)..."
+        echo "🎨 Building Frontend (No Cache, Forced Recreate)..."
         # Force rebuild of frontend to ensure new index.html is picked up
         $USE_SUDO $DOCKER_CMD build --no-cache frontend
-        # Start nginx and frontend
-        $USE_SUDO $DOCKER_CMD up -d frontend nginx
+        
+        # Force recreate containers to apply config changes (ports) and SSL
+        $USE_SUDO $DOCKER_CMD up -d --force-recreate frontend nginx
         ;;
     2)
         echo "⚙️  Building Backend..."
         # We start nginx too to ensure it picks up new SSL certs
-        $USE_SUDO $DOCKER_CMD up -d --build backend nginx
+        $USE_SUDO $DOCKER_CMD up -d --force-recreate --build backend nginx
         ;;
     3)
         echo "🚀 Full Rebuild..."
-        $USE_SUDO $DOCKER_CMD up -d --build
+        $USE_SUDO $DOCKER_CMD up -d --force-recreate --build
         ;;
     4)
         echo "👋 Exiting."
