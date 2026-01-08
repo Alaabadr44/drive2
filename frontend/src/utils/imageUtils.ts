@@ -30,10 +30,14 @@ export const getAccessibleImageUrl = (url?: string | File | null) => {
     }
 
     // Ensure relative paths to uploads start with / to avoid nested route issues
-    if (url.startsWith("uploads/")) {
-      return `/${url}`;
+    // Also handle cases where quotes might have been included or other odditites
+    if (url.includes("uploads/")) {
+      const match = url.match(/(uploads\/.*)/);
+      if (match) {
+        return `/${match[1]}`;
+      }
     }
-
+    
     return url;
   } catch (e) {
     return url;
