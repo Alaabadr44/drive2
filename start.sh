@@ -27,5 +27,9 @@ echo "🚀 Starting Docker Compose with APP_URL=https://$HOST_IP"
 # Export the variable so docker-compose can see it
 export HOST_IP=$HOST_IP
 
-# Run docker-compose
-docker-compose up -d --build
+# Check if docker-compose exists, otherwise use "docker compose"
+if command -v docker-compose &> /dev/null; then
+    docker-compose up -d --build
+else
+    docker compose up -d --build
+fi
