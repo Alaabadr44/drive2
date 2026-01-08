@@ -87,23 +87,23 @@ case "$choice" in
     1)
         echo "🎨 Building Frontend (No Cache, Forced Recreate)..."
         # Force rebuild of frontend to ensure new index.html is picked up
-        $USE_SUDO $DOCKER_CMD build --no-cache frontend
+        $USE_SUDO HOST_IP=$HOST_IP $DOCKER_CMD build --no-cache frontend
         
         # Force recreate containers to apply config changes (ports) and SSL
-        $USE_SUDO $DOCKER_CMD up -d --force-recreate frontend nginx
+        $USE_SUDO HOST_IP=$HOST_IP $DOCKER_CMD up -d --force-recreate frontend nginx
         ;;
     2)
         echo "⚙️  Building Backend..."
         # We start nginx too to ensure it picks up new SSL certs
-        $USE_SUDO $DOCKER_CMD up -d --force-recreate --build backend nginx
+        $USE_SUDO HOST_IP=$HOST_IP $DOCKER_CMD up -d --force-recreate --build backend nginx
         ;;
     3)
         echo "🚀 Full Rebuild..."
-        $USE_SUDO $DOCKER_CMD up -d --force-recreate --build
+        $USE_SUDO HOST_IP=$HOST_IP $DOCKER_CMD up -d --force-recreate --build
         ;;
     4)
         echo "� Restarting Services..."
-        $USE_SUDO $DOCKER_CMD restart
+        $USE_SUDO HOST_IP=$HOST_IP $DOCKER_CMD restart
         ;;
     5)
         echo "�👋 Exiting."
