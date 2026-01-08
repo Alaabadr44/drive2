@@ -22,6 +22,20 @@ if [ -z "$HOST_IP" ]; then
 fi
 
 echo "✅ Detected Local IP: $HOST_IP"
+
+# Generate Self-Signed SSL Certificates for this IP
+echo "🔒 Generating SSL Certificates for $HOST_IP..."
+mkdir -p backend/nginx/ssl
+openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+  -keyout backend/nginx/ssl/server.key \
+  -out backend/nginx/ssl/server.crt \
+  -subj "/C=US/ST=State/L=City/O=Kiosk/CN=$HOST_IP" \
+  -addext "subjectAltName=IP:$HOST_IP" 2>/dev/null || echo "⚠️  OpenSSL modern flags failed, trying legacy..." && \
+  openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+  -keyout backend/nginx/ssl/server.key \
+  -out backend/nginx/ssl/server.crt \
+  -subj "/CN=$HOST_IP" 2>/dev/null
+
 echo "🚀 Starting Docker Compose with APP_URL=https://$HOST_IP"
 
 # Export the variable so docker-compose can see it
