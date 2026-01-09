@@ -131,7 +131,7 @@ export const CallProvider = ({ children }: { children: ReactNode }) => {
 
           // Mix Remote Stream
           if (remoteStream.getAudioTracks().length > 0) {
-              const remoteSource = ctx.createMediaStreamSource(remoteStream);
+              const remoteSource = ctx.createMediaStreamSource(remoteStream.clone());
               remoteSource.connect(dest);
           }
 
@@ -394,11 +394,7 @@ export const CallProvider = ({ children }: { children: ReactNode }) => {
       // Safety: Mute audio initially for 400ms to allow stabilization
       if (user?.role === 'RESTAURANT' && event.streams[0]) {
           event.streams[0].getAudioTracks().forEach(track => {
-              track.enabled = false;
-              setTimeout(() => {
-                  track.enabled = true;
-                  console.log("🔊 Unmuted audio after stabilization delay");
-              }, 400); // 400ms delay per request
+              track.enabled = true;
           });
       }
 

@@ -46,7 +46,7 @@ export function AudioVisualizer({ stream, height = 60, width = 200, barColor = '
     analyserRef.current.smoothingTimeConstant = 0.8;
 
     try {
-        sourceRef.current = ctx.createMediaStreamSource(stream);
+        sourceRef.current = ctx.createMediaStreamSource(stream.clone());
         sourceRef.current.connect(analyserRef.current);
         
     } catch (err) {
