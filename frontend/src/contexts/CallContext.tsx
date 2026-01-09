@@ -605,6 +605,21 @@ export const CallProvider = ({ children }: { children: ReactNode }) => {
   }, [socket, callId, targetId, user?.role, setupPeerConnection, cleanupCall]);
 
 
+  // --- Watchdog: Stuck in Loading Safety Net ---
+  useEffect(() => {
+    if (callState === 'incall' && !remoteStream && !peerConnection.current && socket && incomingCallDataRef.current && user?.role === 'RESTAURANT') {
+         console.log("⚠️ Watchdog: Call is 'incall' but no connection yet. Retrying acceptance...");
+         const timer = setTimeout(() => {
+             // If still stuck after 2s
+             if (callStateRef.current === 'incall' && !peerConnection.current) {
+                 console.log("🚨 Watchdog: Re-emitting call:accept!!!");
+                 socket.emit('call:accept', { callId: incomingCallDataRef.current!.callId });
+             }
+         }, 2000); // 2 seconds delay
+         return () => clearTimeout(timer);
+    }
+  }, [callState, remoteStream, socket, user?.role]);
+
   return (
     <CallContext.Provider value={{
       callState,
