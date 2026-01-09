@@ -614,6 +614,45 @@ export const CallProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [callState, remoteStream, socket, user?.role]);
 
+  // --- Watchdog: KIOSK Safety Net ---
+  useEffect(() => {
+    // If we vary role check, we can cover SCREEN specific issues
+    if (callState === 'incall' && !remoteStream && socket && user?.role === 'SCREEN' && callId) {
+         console.log("⚠️ Kiosk Watchdog: Connected but waiting for stream...");
+         const timer = setTimeout(async () => {
+             // If still stuck after 3s
+             if (callStateRef.current === 'incall' && !remoteStream) {
+                 console.log("🚨 Kiosk Watchdog: Connection stuck. Retrying WebRTC Offer...");
+                 
+                 // 1. Close existing
+                 if (peerConnection.current) {
+                    peerConnection.current.close();
+                    peerConnection.current = null;
+                 }
+                 
+                 // 2. Setup New
+                 // Need targetId. For screen, target is ACTIVE RESTAURANT
+                 const targetId = activeRestaurant?.id || targetIdRef.current;
+                 if (targetId) {
+                     const pc = await setupPeerConnection(callId, targetId);
+                     if (pc) {
+                        const offer = await pc.createOffer();
+                        await pc.setLocalDescription(offer);
+                        socket.emit('webrtc:signal', {
+                          type: 'offer',
+                          payload: offer,
+                          callId: callId,
+                          targetId: targetId,
+                          targetType: 'restaurant'
+                        });
+                     }
+                 }
+             }
+         }, 3000); // 3 seconds grace period
+         return () => clearTimeout(timer);
+    }
+  }, [callState, remoteStream, socket, user?.role, callId, activeRestaurant, setupPeerConnection]);
+
   return (
     <CallContext.Provider value={{
       callState,
