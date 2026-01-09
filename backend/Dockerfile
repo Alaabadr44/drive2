@@ -31,7 +31,6 @@ COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/TENANTS ./TENANTS
 COPY --from=builder /app/nginx ./nginx
 COPY --from=builder /app/public ./public
-COPY --from=builder /app/TENANTS ./TENANTS
 
 # Copy other necessary folders if they exist (like uploads)
 # COPY --from=builder /app/uploads ./uploads
