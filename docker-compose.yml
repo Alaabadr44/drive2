@@ -10,6 +10,7 @@ services:
       - REDIS_URL=redis://redis:6379
       - DATABASE_URL=postgres://postgres:postgres@postgres:5432/kiosk_db
       - APP_URL=https://${HOST_IP}
+      - SKIP_SEED=${SKIP_SEED}
       # Add other environment variables here or use env_file
     depends_on:
       - redis
