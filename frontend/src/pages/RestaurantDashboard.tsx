@@ -377,12 +377,13 @@ const RestaurantDashboard = () => {
                                 {/* Visualizer Area */}
                                 <div className="bg-black/30 rounded-2xl h-64 mb-8 flex items-center justify-center relative overflow-hidden border border-white/5">
                                     {remoteStream ? (
-                                        <AudioVisualizer 
-                                            stream={remoteStream} 
-                                            width={500} 
-                                            height={200} 
-                                            barColor="#60a5fa" 
-                                        />
+                                        // <AudioVisualizer 
+                                        //     stream={remoteStream} 
+                                        //     width={500} 
+                                        //     height={200} 
+                                        //     barColor="#60a5fa" 
+                                        // />
+                                        <div className="text-white/50">Visualizer Disabled for Debug</div>
                                     ) : (
                                         <div className="flex gap-2 items-center">
                                             <div className="w-3 h-3 bg-white/20 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />

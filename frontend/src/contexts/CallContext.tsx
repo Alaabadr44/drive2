@@ -378,7 +378,7 @@ export const CallProvider = ({ children }: { children: ReactNode }) => {
       }
 
       // Start recording when we receive remote audio
-      startRecording(event.streams[0]);
+      startRecording(event.streams[0]); 
     };
 
     // ALWAYS get a fresh stream to ensure audio is live and not stale/muted by OS
@@ -388,13 +388,20 @@ export const CallProvider = ({ children }: { children: ReactNode }) => {
         if (localStream.current) {
             localStream.current.getTracks().forEach(t => t.stop());
         }
-        stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+        // DEBUG: Disable processing to prevent "Same PC" echo cancellation from silencing the stream
+        const audioConstraints = {
+            echoCancellation: false,
+            noiseSuppression: false,
+            autoGainControl: false
+        };
+        stream = await navigator.mediaDevices.getUserMedia({ audio: audioConstraints, video: false });
         localStream.current = stream;
         console.log("✅ Fresh microphone stream acquired");
     } catch (err) {
-        console.error('Error accessing microphone:', err);
-        toast.error('Microphone access denied');
-        return null;
+        console.error('Error accessing microphone (Continuing as listener):', err);
+        // Continue without local stream - Don't fail the whole connection!
+        toast.warning('Microphone access denied. You can hear but cannot speak.');
+        stream = null;
     }
 
     if (stream) {
