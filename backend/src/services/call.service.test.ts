@@ -72,7 +72,7 @@ describe.skip('CallService', () => {
 
     const result = await callService.initiateCall(kioskId, restaurantId);
 
-    expect(result.id).toBe('call-1');
+    expect((result as any).id).toBe('call-1');
     expect(AppDataSource.getRepository(CallSession).create).toHaveBeenCalled();
     expect(AppDataSource.getRepository(CallSession).save).toHaveBeenCalled();
     expect(AppDataSource.getRepository(Restaurant).update).toHaveBeenCalledWith(restaurantId, {

@@ -1,5 +1,6 @@
 import { AppDataSource } from '../config/data-source';
 import { LockService } from './lock.service';
+import { QueueService } from './queue.service';
 import { CallSession, CallStatus } from '../entities/CallSession';
 import { Restaurant, RestaurantStatus } from '../entities/Restaurant';
 import { io } from '../server';
@@ -8,6 +9,7 @@ import { In, Between, MoreThanOrEqual, LessThanOrEqual, FindOptionsWhere } from 
 export class CallService {
   private callRepository = AppDataSource.getRepository(CallSession);
   private restaurantRepository = AppDataSource.getRepository(Restaurant);
+  private queueService = new QueueService();
 
   async initiateCall(kioskId: string, restaurantId: string, initiatedBy: "SCREEN" | "RESTAURANT" = "SCREEN") {
     // 1. Check if Kiosk is already in a call
@@ -58,8 +60,29 @@ export class CallService {
     const isLocked = await LockService.acquireCallLock(restaurantId, savedCall.id);
     if (!isLocked) {
         // Rollback: Failed to acquire lock (busy)
-        await this.callRepository.delete(savedCall.id); 
-        throw new Error('Restaurant is busy');
+        await this.callRepository.delete(savedCall.id);
+
+        // Add to Queue instead of error
+        // We need the screen name, so let's fetch the screen details briefly or assume we have it.
+        // Wait, initiateCall doesn't take screenName. We can fetch it or just use ID.
+        // Actually, we should fetch it to display nice names in queue.
+        // For efficiency, let's just use "Kiosk" if we don't want to query, but better to query.
+        
+        // Quick fetch of screen name (optional but good for UI)
+        /* 
+           Since we deleted the call, we can't use it. 
+           But we can query the 'screen' table if we had the repository.
+           Let's just use kioskId for now or pass name? 
+           The socket handler usually has access to name.
+           Let's update initiateCall signature later if needed, but for now just push ID.
+        */
+        
+        const position = await this.queueService.addToQueue(restaurantId, kioskId, `Screen ${kioskId.substring(0,4)}`); // Placeholder name for now or fetch
+        
+        console.log(`[CallService] Restaurant ${restaurantId} busy. Added ${kioskId} to queue at pos ${position}`);
+        
+        // Return a special object indicating queued
+        return { status: 'QUEUED', position, kioskId, restaurantId };
     }
 
     // Fetch relations
@@ -116,7 +139,44 @@ export class CallService {
     io.to(`restaurant-${call.restaurantId}`).emit('call:ended', event);
     io.to(`screen-${call.kioskId}`).emit('call:ended', event);
 
+    // CHECK QUEUE for next caller
+    const nextItem = await this.queueService.popQueue(call.restaurantId);
+    if (nextItem) {
+        console.log(`[CallService] 🚀 Auto-initiating call for queued screen: ${nextItem.screenId}`);
+        // We trigger initiateCall recursively or just call it.
+        // Note: initiateCall is async. usage of 'void' to not block? 
+        // Better to await or just let it run.
+        try {
+            // Initiate call from SCREEN mode (as if they called)
+            await this.initiateCall(nextItem.screenId, call.restaurantId, "SCREEN");
+        } catch (e) {
+            console.error(`[CallService] Failed to auto-connect queued screen ${nextItem.screenId}:`, e);
+        }
+    }
+
+    // BROADCAST NEW POSITIONS to remaining queue
+    await this.notifyQueueUpdates(call.restaurantId);
+
     return updatedCall;
+  }
+
+  /**
+   * Helper: Broadcasts updated queue positions to all screens in the queue.
+   */
+  private async notifyQueueUpdates(restaurantId: string) {
+    try {
+        const queue = await this.queueService.getQueue(restaurantId);
+        
+        // Loop through and notify each screen of its new 1-based index
+        queue.forEach((item, index) => {
+            const position = index + 1;
+            console.log(`[CallService] 📢 Notifying Screen ${item.screenId} of new queue position: ${position}`);
+            io.to(`screen-${item.screenId}`).emit('queue:update', { position });
+        });
+
+    } catch (e) {
+        console.error(`[CallService] Failed to notify queue updates for restaurant ${restaurantId}:`, e);
+    }
   }
 
   // Heartbeat or Status update

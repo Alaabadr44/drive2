@@ -7,7 +7,7 @@ import { SOUNDS } from '@/constants/sounds';
 import { Restaurant } from '@/data/mockData';
 import { api } from '@/services/api';
 
-type CallState = 'idle' | 'calling' | 'ringing' | 'incall' | 'busy' | 'ended' | 'thankyou';
+type CallState = 'idle' | 'calling' | 'ringing' | 'incall' | 'busy' | 'ended' | 'thankyou' | 'queued';
 
 interface CallContextType {
   callState: CallState;
@@ -20,6 +20,7 @@ interface CallContextType {
   endCall: () => void;
   incomingCallData: { callId: string; restaurantId?: string; screenName?: string } | null;
   isUploading: boolean;
+  queuePosition: number | null;
 }
 
 const globalUploadedCallIds = new Set<string>();
@@ -33,6 +34,7 @@ export const CallProvider = ({ children }: { children: ReactNode }) => {
   const [callId, setCallId] = useState<string | null>(null);
   const [activeRestaurant, setActiveRestaurant] = useState<Restaurant | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [queuePosition, setQueuePosition] = useState<number | null>(null);
   
   // Data for incoming call (Restaurant side)
   const [incomingCallData, setIncomingCallData] = useState<{ 
@@ -261,6 +263,7 @@ export const CallProvider = ({ children }: { children: ReactNode }) => {
     setIncomingCallData(null);
     setTargetId(null);
     setActiveRestaurant(null);
+    setQueuePosition(null);
   }, [user?.role, callId, stopAndUploadRecording]); 
 
   // --- Pre-request Audio Permission - Removed to prevent stale streams ---
@@ -479,11 +482,22 @@ export const CallProvider = ({ children }: { children: ReactNode }) => {
             } else {
                 console.warn("CallContext: RINGING status received without callId!");
             }
+        } else if (data.status === 'QUEUED') {
+            setCallState('queued');
+            if ((data as any).position) {
+                setQueuePosition((data as any).position);
+            }
         } else if (data.status === 'BUSY') {
             setCallState('busy');
             // Toast removed per request
             setTimeout(cleanupCall, 12000);
         }
+    });
+    
+    // 1b. Queue Update
+    socket.on('queue:update', (data: { position: number }) => {
+        console.log("CallContext: Received queue:update", data);
+        setQueuePosition(data.position);
     });
 
     // 2. Incoming Call (Restaurant)
@@ -664,7 +678,8 @@ export const CallProvider = ({ children }: { children: ReactNode }) => {
       rejectCall,
       endCall,
       incomingCallData,
-      isUploading
+      isUploading,
+      queuePosition
     }}>
       {children}
     </CallContext.Provider>

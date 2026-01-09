@@ -239,10 +239,32 @@ export const registerCallHandlers = (socket: Socket) => {
   socket.on('call:request', async (data: { restaurantId: string; screenId: string }) => {
     try {
       console.log(`[SOCKET] 📞 Call requested by Screen ${data.screenId} for Restaurant ${data.restaurantId}`);
-      const call = await callService.initiateCall(data.screenId, data.restaurantId, 'SCREEN');
-      io.to(`screen-${data.screenId}`).emit('call:status', { status: 'RINGING', callId: call.id });
+      const result: any = await callService.initiateCall(data.screenId, data.restaurantId, 'SCREEN');
+      
+      if (result.status === 'QUEUED') {
+          console.log(`[SOCKET] ⏳ Screen ${data.screenId} queued at position ${result.position}`);
+          
+          // Emit QUEUED status to screen
+          io.to(`screen-${data.screenId}`).emit('call:status', { 
+              status: 'QUEUED', 
+              position: result.position,
+              message: `You are number ${result.position} in line.`
+          });
+
+          // Also emit specific queue event if we want separate hanlding
+          io.to(`screen-${data.screenId}`).emit('queue:update', { 
+            position: result.position 
+          });
+
+      } else {
+          // Normal ringing
+          io.to(`screen-${data.screenId}`).emit('call:status', { status: 'RINGING', callId: result.id });
+      }
+
     } catch (error: any) {
       console.error('[SOCKET] ❌ Call request failed:', error.message);
+      // Only emit BUSY if it's a real error, not queue
+      // But initiateCall now queues instead of busy error, so this catches other errors (offline etc)
       io.to(`screen-${data.screenId}`).emit('call:status', { status: 'BUSY', message: error.message });
     }
   });

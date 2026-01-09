@@ -11,6 +11,7 @@ services:
       - DATABASE_URL=postgres://postgres:postgres@postgres:5432/kiosk_db
       - APP_URL=https://${HOST_IP}
       - SKIP_SEED=${SKIP_SEED}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
       # Add other environment variables here or use env_file
     depends_on:
       - redis

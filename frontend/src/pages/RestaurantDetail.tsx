@@ -5,7 +5,7 @@ import { Restaurant } from '@/data/mockData';
 import { api } from '@/services/api'; // Import API
 import { getAccessibleImageUrl } from '@/utils/imageUtils';
 import { useState, useMemo, useEffect, useRef } from 'react';
-import { ZoomIn, ZoomOut, ArrowLeft, Phone, PhoneOff, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ZoomIn, ZoomOut, ArrowLeft, Phone, PhoneOff, ChevronLeft, ChevronRight, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -19,7 +19,7 @@ interface RestaurantDetailProps {
 
 export function RestaurantDetail({ restaurant, onBack, onReset }: RestaurantDetailProps) {
   const { isRTL } = useLanguage();
-  const { callState, initiateCall, endCall } = useCall();
+  const { callState, initiateCall, endCall, queuePosition } = useCall();
   const [scale, setScale] = useState(1);
   const callInProgressRef = useRef(false);
 
@@ -72,7 +72,7 @@ export function RestaurantDetail({ restaurant, onBack, onReset }: RestaurantDeta
     }
 
     // Mark call as in progress if we enter any non-idle state
-    if (callState === 'calling' || callState === 'ringing' || callState === 'incall' || callState === 'busy' || callState === 'thankyou') {
+    if (callState === 'calling' || callState === 'ringing' || callState === 'incall' || callState === 'busy' || callState === 'thankyou' || callState === 'queued') {
       callInProgressRef.current = true;
     } 
     
@@ -114,7 +114,7 @@ export function RestaurantDetail({ restaurant, onBack, onReset }: RestaurantDeta
   const name = isRTL ? restaurant.nameAr : restaurant.nameEn;
 
   // UI state: hide menu only when actually calling/ringing/incall/busy
-  const isCalling = callState === 'calling' || callState === 'ringing' || callState === 'incall' || callState === 'busy';
+  const isCalling = callState === 'calling' || callState === 'ringing' || callState === 'incall' || callState === 'busy' || callState === 'queued';
 
   // Call Timer Logic
   const [callDuration, setCallDuration] = useState(0);
@@ -296,7 +296,26 @@ export function RestaurantDetail({ restaurant, onBack, onReset }: RestaurantDeta
                     {callState === 'calling' && (isRTL ? 'جاري الاتصال...' : 'Calling ...')}
                     {callState === 'ringing' && (isRTL ? 'يرن...' : 'Ringing ...')}
                     {callState === 'busy' && (isRTL ? 'خط مشغول' : 'Line Busy')}
+                    {callState === 'queued' && (
+                        <span className="text-amber-400">
+                             {isRTL ? 'في الانتظار...' : 'Waiting in Queue...'}
+                        </span>
+                    )}
                   </p>
+
+                  {callState === 'queued' && (
+                      <div className="flex flex-col items-end gap-1 animate-in slide-in-from-right duration-700 mt-2">
+                           <div className="flex items-center gap-2 text-white/80">
+                               <Users className="w-6 h-6" />
+                               <span className="text-2xl font-bold">
+                                   {isRTL ? `دورك: ${queuePosition}` : `Position: ${queuePosition}`}
+                               </span>
+                           </div>
+                           <p className="text-sm text-white/50">
+                               {isRTL ? 'يرجى الانتظار، سيتم توصيلك تلقائياً.' : 'Please wait, you will be connected automatically.'}
+                           </p>
+                      </div>
+                  )}
 
                   {callState === 'incall' && (
                     <div className="flex flex-col items-end gap-1 animate-in slide-in-from-right duration-700">
@@ -324,7 +343,7 @@ export function RestaurantDetail({ restaurant, onBack, onReset }: RestaurantDeta
                       onClick={endCall}
                       className={cn(
                         "w-32 h-32 rounded-full flex items-center justify-center text-black shadow-2xl hover:scale-105 transition-transform active:scale-95 relative z-10",
-                        callState === 'busy' ? "bg-amber-400" : "bg-white animate-vibrate"
+                        callState === 'busy' ? "bg-amber-400" : (callState === 'queued' ? "bg-amber-400 animate-pulse" : "bg-white animate-vibrate")
                       )}
                     >
                       {/* Using Phone icon here still until it connects? standard UI usually shows Hangup option though. 
@@ -333,7 +352,7 @@ export function RestaurantDetail({ restaurant, onBack, onReset }: RestaurantDeta
                           This block is INSIDE the (isCalling) block.
                           So this button is normally the hangup button.
                       */}
-                       {callState === 'busy' ? <PhoneOff className="w-16 h-16 text-black" /> : <PhoneOff className="w-16 h-16 text-red-600" />}
+                       {callState === 'busy' || callState === 'queued' ? <PhoneOff className="w-16 h-16 text-black" /> : <PhoneOff className="w-16 h-16 text-red-600" />}
                    </button>
                 )}
               </div>
