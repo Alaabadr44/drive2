@@ -216,13 +216,14 @@ async function seed() {
         }
 
         // 4. Assign Restaurants to Screens (Dynamic Distribution)
+        // 4. Assign Restaurants to Screens (Explicit Groups)
         console.log("Assigning Restaurants to Screens...");
         
-        const allCreatedRestaurants = Object.values(createdRestaurantsMap);
-        const halfIndex = Math.ceil(allCreatedRestaurants.length / 2);
-        
-        const group1 = allCreatedRestaurants.slice(0, halfIndex);
-        const group2 = allCreatedRestaurants.slice(halfIndex);
+        const group1Names = ["DARS", "SAINTS", "DAILY DOSE", "NUDE BAKERY", "JAIL BIRD", "MAINE"];
+        const group2Names = ["PAO", "LYCHTEE", "MEAT BARTY", "HOWLIN BIRDS"];
+
+        const group1 = group1Names.map(name => createdRestaurantsMap[name]).filter(r => !!r);
+        const group2 = group2Names.map(name => createdRestaurantsMap[name]).filter(r => !!r);
         
         // Assign Group 1 to Lane 1-3
         const targetScreens1 = createdScreens.filter(s => ['line 1', 'line 2', 'line 3'].includes(s.name));
