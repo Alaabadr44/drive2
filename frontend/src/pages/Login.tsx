@@ -37,10 +37,7 @@ const Login = () => {
     }
   };
 
-  const handleFillCredentials = (e: string, p: string) => {
-    setEmail(e);
-    setPassword(p);
-  };
+
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-50">
@@ -76,29 +73,7 @@ const Login = () => {
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? "Logging in..." : "Login"}
             </Button>
-            <div className="text-sm text-center text-muted-foreground mt-4">
-              <p>Demo Credentials (Click to fill):</p>
-              <ul className="mt-2 space-y-1 text-xs">
-                <li 
-                  className="cursor-pointer hover:text-primary transition-colors py-1" 
-                  onClick={() => handleFillCredentials('admin@example.com', 'admin123')}
-                >
-                  Admin: <strong>admin@example.com / admin123</strong>
-                </li>
-                <li 
-                  className="cursor-pointer hover:text-primary transition-colors py-1" 
-                  onClick={() => handleFillCredentials('burger@king.com', 'burger123')}
-                >
-                  Restaurant: <strong>burger@king.com / burger123</strong>
-                </li>
-                <li 
-                  className="cursor-pointer hover:text-primary transition-colors py-1" 
-                  onClick={() => handleFillCredentials('kiosk1@mall.com', 'kiosk123')}
-                >
-                  Kiosk: <strong>kiosk1@mall.com / kiosk123</strong>
-                </li>
-              </ul>
-            </div>
+
           </form>
         </CardContent>
       </Card>
