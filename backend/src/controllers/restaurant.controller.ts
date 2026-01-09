@@ -1,7 +1,9 @@
 import { Request, Response } from 'express';
 import { RestaurantService } from '../services/restaurant.service';
+import { AiService } from '../services/ai.service';
 
 const restaurantService = new RestaurantService();
+const aiService = new AiService();
 import { sendResponse, sendError } from '../utils/response';
 
 import { getLocalIpAddress } from '../utils/network';
@@ -246,6 +248,26 @@ export class RestaurantController {
     } catch (error) {
       console.error('Error fetching my screens:', error);
       sendError(res, 'Failed to fetch restaurant');
+    }
+  }
+
+  async analyzeMenu(req: any, res: any) {
+    try {
+        const { id } = req.params;
+        
+        // Check permissions (Super Admin or Owner)
+        if (req.user.role === 'RESTAURANT' && req.user.restaurantId !== id) {
+            return sendError(res, 'Forbidden', 403);
+        }
+
+        const rawResult = await aiService.analyzeMenu(id);
+        
+        // We return the raw text result, but it is also saved in DB
+        sendResponse(res, { analysis: rawResult }, 'Menu analysis completed successfully');
+    } catch (error) {
+        console.error('Error analyzing menu:', error);
+        const msg = error instanceof Error ? error.message : 'Unknown error';
+        sendError(res, `Failed to analyze menu: ${msg}`, 500);
     }
   }
 }

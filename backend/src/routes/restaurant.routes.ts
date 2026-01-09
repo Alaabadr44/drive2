@@ -240,4 +240,28 @@ router.patch('/:id/deactivate', authenticate, authorize([Role.SUPER_ADMIN]), res
  */
 router.post('/:id/reset', authenticate, authorize([Role.SUPER_ADMIN, Role.RESTAURANT]), restaurantController.reset.bind(restaurantController));
 
+/**
+ * @swagger
+ * /restaurants/{id}/analyze-menu:
+ *   post:
+ *     summary: Trigger AI analysis of restaurant menu images
+ *     tags: [Restaurants]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Analysis completed
+ *       403:
+ *         description: Forbidden
+ *       500:
+ *         description: Analysis failed
+ */
+router.post('/:id/analyze-menu', authenticate, authorize([Role.SUPER_ADMIN, Role.RESTAURANT]), restaurantController.analyzeMenu.bind(restaurantController));
+
 export default router;

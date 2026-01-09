@@ -29,6 +29,9 @@ export class Restaurant {
   @Column({ nullable: true })
   sipExtension?: string;
 
+  @Column({ type: "text", nullable: true })
+  aiContext?: string;
+
   @Column({ default: true })
   isVisible!: boolean;
 
