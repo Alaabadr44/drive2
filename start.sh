@@ -7,12 +7,33 @@ HOST_IP=""
 # IP Detection Table
 echo "---------------------------------------"
 echo "📡 Available IP Addresses:"
-hostname -I | tr ' ' '\n' | grep -v '^$' | nl -w2 -s') '
-echo "---------------------------------------"
-read -r -p "Enter the Number of the IP to use (or type a manual IP): " ip_choice
+# IP Detection Logic
+detected_ips=()
 
-# Logic to pick IP
-detected_ips=($(hostname -I))
+if [[ "$OS" == "Darwin" ]]; then
+    # macOS
+    detected_ips=($(ifconfig | grep "inet " | grep -v 127.0.0.1 | awk '{print $2}'))
+elif [[ "$OS" == *"MINGW"* ]] || [[ "$OS" == *"CYGWIN"* ]] || [[ "$OS" == *"MSYS"* ]]; then
+    # Windows (Git Bash)
+    # Parse ipconfig for IPv4 addresses
+    detected_ips=($(ipconfig //all | grep "IPv4" | awk -F: '{print $2}' | sed 's/^(Preferred)//g' | tr -d '\r ' | grep -v '^$'))
+else
+    # Linux (hostname -I is standard, fallback to ip addr if needed)
+    if command -v hostname &> /dev/null; then
+        detected_ips=($(hostname -I))
+    else
+        detected_ips=($(ip addr | grep 'state UP' -A2 | grep 'inet ' | awk '{print $2}' | cut -f1 -d'/'))
+    fi
+fi
+
+echo "---------------------------------------"
+echo "📡 Available IP Addresses:"
+i=1
+for ip in "${detected_ips[@]}"; do
+    echo "$i) $ip"
+    ((i++))
+done
+echo "---------------------------------------"
 if [[ "$ip_choice" =~ ^[0-9]+$ ]] && [ "$ip_choice" -le "${#detected_ips[@]}" ] && [ "$ip_choice" -gt 0 ]; then
     HOST_IP=${detected_ips[$((ip_choice-1))]}
 elif [[ "$ip_choice" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
