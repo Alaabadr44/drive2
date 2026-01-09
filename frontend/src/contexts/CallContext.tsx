@@ -389,12 +389,8 @@ export const CallProvider = ({ children }: { children: ReactNode }) => {
             localStream.current.getTracks().forEach(t => t.stop());
         }
         // DEBUG: Disable processing to prevent "Same PC" echo cancellation from silencing the stream
-        const audioConstraints = {
-            echoCancellation: false,
-            noiseSuppression: false,
-            autoGainControl: false
-        };
-        stream = await navigator.mediaDevices.getUserMedia({ audio: audioConstraints, video: false });
+        // Back to normal for testing on separate PCs
+        stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
         localStream.current = stream;
         console.log("✅ Fresh microphone stream acquired");
     } catch (err) {

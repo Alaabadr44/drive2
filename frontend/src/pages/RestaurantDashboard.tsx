@@ -34,12 +34,10 @@ const RestaurantDashboard = () => {
     const hasRefreshedRef = useRef(false);
     const audioRef = useRef<HTMLAudioElement>(null);
     
-    // DEBUG FLAG - Set to false for production
-    const DEBUG_AUDIO_MODE = true; 
-
     // Ensure audio plays when remote stream is available
     useEffect(() => {
         if (audioRef.current && remoteStream && (callState === 'incall' || callState === 'ringing')) {
+             // ... existing audio play logic ...
             console.log("RestaurantDashboard: Attaching remote stream to audio element");
             
             // Debug Remote Stream
@@ -377,13 +375,12 @@ const RestaurantDashboard = () => {
                                 {/* Visualizer Area */}
                                 <div className="bg-black/30 rounded-2xl h-64 mb-8 flex items-center justify-center relative overflow-hidden border border-white/5">
                                     {remoteStream ? (
-                                        // <AudioVisualizer 
-                                        //     stream={remoteStream} 
-                                        //     width={500} 
-                                        //     height={200} 
-                                        //     barColor="#60a5fa" 
-                                        // />
-                                        <div className="text-white/50">Visualizer Disabled for Debug</div>
+                                        <AudioVisualizer 
+                                            stream={remoteStream} 
+                                            width={500} 
+                                            height={200} 
+                                            barColor="#60a5fa" 
+                                        />
                                     ) : (
                                         <div className="flex gap-2 items-center">
                                             <div className="w-3 h-3 bg-white/20 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
@@ -517,36 +514,6 @@ const RestaurantDashboard = () => {
                         <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-6 shadow-[0_0_20px_rgba(59,130,246,0.3)]"></div>
                         <h2 className="text-3xl font-bold text-white mb-2 tracking-tight">Ending Call...</h2>
                         <p className="text-white/50 text-lg animate-pulse">Uploading call recording</p>
-                    </div>
-                </div>
-            )}
-            {/* Debug Audio Indicator */}
-            {DEBUG_AUDIO_MODE && callState === 'incall' && (
-                <div className="fixed bottom-4 right-4 bg-black/80 text-white p-4 rounded-lg border border-red-500/50 z-[9999] font-mono text-xs max-w-xs pointer-events-none">
-                    <h4 className="text-red-400 font-bold mb-2 uppercase border-b border-red-500/30 pb-1">Audio Debugger</h4>
-                    <div className="space-y-1">
-                        <div className="flex justify-between">
-                            <span>Stream Status:</span>
-                            <span className={remoteStream ? "text-green-400" : "text-red-500"}>
-                                {remoteStream ? "RECEIVED" : "MISSING"}
-                            </span>
-                        </div>
-                        <div className="flex justify-between">
-                            <span>Audio Tracks:</span>
-                            <span className="text-blue-300">{remoteStream?.getAudioTracks().length || 0}</span>
-                        </div>
-                        {remoteStream?.getAudioTracks().map(t => (
-                            <div key={t.id} className="pl-2 border-l border-white/20 mt-1">
-                                <div>ID: {t.id.slice(0,8)}...</div>
-                                <div className={t.enabled ? "text-green-400" : "text-red-500"}>
-                                    Enabled: {t.enabled.toString()}
-                                </div>
-                                <div className={!t.muted ? "text-green-400" : "text-yellow-500"}>
-                                    Live: {(!t.muted).toString()} (Muted: {t.muted.toString()})
-                                </div>
-                                <div>State: {t.readyState}</div>
-                            </div>
-                        ))}
                     </div>
                 </div>
             )}
