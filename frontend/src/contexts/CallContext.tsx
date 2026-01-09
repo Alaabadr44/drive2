@@ -365,6 +365,13 @@ export const CallProvider = ({ children }: { children: ReactNode }) => {
   }, [callState, user?.role]);
 
   const setupPeerConnection = useCallback(async (currentCallId: string, currentTargetId: string) => {
+    // Cleanup existing connection if any (to allow clean retries)
+    if (peerConnection.current) {
+        console.warn("Closing existing PeerConnection before creating new one");
+        peerConnection.current.close();
+        peerConnection.current = null;
+    }
+
     const pc = new RTCPeerConnection({
         iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
     });
@@ -385,7 +392,7 @@ export const CallProvider = ({ children }: { children: ReactNode }) => {
       setRemoteStream(event.streams[0]);
       
       // Safety: Mute audio initially for 400ms to allow stabilization
-      if (user?.role === 'RESTAURANT') {
+      if (user?.role === 'RESTAURANT' && event.streams[0]) {
           event.streams[0].getAudioTracks().forEach(track => {
               track.enabled = false;
               setTimeout(() => {
@@ -566,7 +573,7 @@ export const CallProvider = ({ children }: { children: ReactNode }) => {
               type: 'answer',
               payload: answer,
               callId: data.callId,
-              targetId: targetId, // Use stored target
+              targetId: targetIdRef.current || targetId, // Use stored target (Ref preferred)
               targetType: user?.role === 'SCREEN' ? 'restaurant' : 'screen' // Reply to other type
             });
             
