@@ -383,6 +383,18 @@ export const CallProvider = ({ children }: { children: ReactNode }) => {
 
     pc.ontrack = (event) => {
       setRemoteStream(event.streams[0]);
+      
+      // Safety: Mute audio initially for 400ms to allow stabilization
+      if (user?.role === 'RESTAURANT') {
+          event.streams[0].getAudioTracks().forEach(track => {
+              track.enabled = false;
+              setTimeout(() => {
+                  track.enabled = true;
+                  console.log("🔊 Unmuted audio after stabilization delay");
+              }, 400); // 400ms delay per request
+          });
+      }
+
       // Start recording when we receive remote audio
       startRecording(event.streams[0]);
     };
