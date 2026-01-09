@@ -125,7 +125,7 @@ export const CallProvider = ({ children }: { children: ReactNode }) => {
 
           // Mix Local Stream
           if (localStream.current && localStream.current.getAudioTracks().length > 0) {
-              const localSource = ctx.createMediaStreamSource(localStream.current);
+              const localSource = ctx.createMediaStreamSource(localStream.current.clone()); // FIX: Clone to prevent stealing from PC
               localSource.connect(dest);
           }
 
@@ -420,6 +420,7 @@ export const CallProvider = ({ children }: { children: ReactNode }) => {
 
     if (stream) {
         stream.getTracks().forEach(track => {
+            console.log(`[WebRTC] Adding local track: kind=${track.kind}, label=${track.label}, enabled=${track.enabled}, id=${track.id}`);
             pc.addTrack(track, stream!); // Non-null assertion safe due to check
         });
     }
