@@ -38,19 +38,39 @@ const RestaurantDashboard = () => {
     useEffect(() => {
         if (audioRef.current && remoteStream && (callState === 'incall' || callState === 'ringing')) {
             console.log("RestaurantDashboard: Attaching remote stream to audio element");
+            
+            // Debug Remote Stream
+            remoteStream.getAudioTracks().forEach(track => {
+                console.log(`[Audio Debug] Track ${track.id}: enabled=${track.enabled}, muted=${track.muted}, readyState=${track.readyState}`);
+                // Force enable just in case
+                track.enabled = true;
+            });
+            
             audioRef.current.srcObject = remoteStream;
             audioRef.current.volume = 1.0;
             
             const tryPlay = async () => {
                 try {
                     await audioRef.current?.play();
+                    console.log("[Audio Debug] Audio playback started successfully");
                     setHasAudioError(false);
                 } catch (e) {
-                    console.error("Error playing audio (Autoplay blocked?):", e);
+                    console.error("[Audio Debug] Error playing audio (Autoplay blocked?):", e);
                     setHasAudioError(true);
                 }
             };
             tryPlay();
+            
+            // Interval to check if track goes mute unexpectedly
+            const checkInterval = setInterval(() => {
+                 remoteStream.getAudioTracks().forEach(track => {
+                    if (track.muted || !track.enabled) {
+                         console.warn(`[Audio Debug] Track became unusable: muted=${track.muted}, enabled=${track.enabled}`);
+                    }
+                });
+            }, 2000);
+            
+            return () => clearInterval(checkInterval);
         }
     }, [remoteStream, callState]);
 

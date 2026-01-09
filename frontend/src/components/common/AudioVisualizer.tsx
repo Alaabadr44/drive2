@@ -107,13 +107,14 @@ export function AudioVisualizer({ stream, height = 60, width = 200, barColor = '
 
     return () => {
         if (animationRef.current) cancelAnimationFrame(animationRef.current);
-        // Be careful disconnecting source, as it might affect other nodes if shared? 
-        // createMediaStreamSource creates a NEW source node, so we should disconnect it.
         if (sourceRef.current) {
             sourceRef.current.disconnect(); 
             sourceRef.current = null;
         }
-        // Do not close ctx, as it might be expensive to recreate or shared in logic
+        if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
+            audioContextRef.current.close();
+            audioContextRef.current = null;
+        }
     };
   }, [stream, barColor]); // Re-init if stream changes
 
