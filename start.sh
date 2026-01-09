@@ -59,6 +59,12 @@ echo "🚀 Starting Docker Compose with APP_URL=https://$HOST_IP"
 # Export the variable so docker-compose can see it
 export HOST_IP=$HOST_IP
 
+# Load secrets from backend/.env if available
+if [ -f "backend/.env" ]; then
+    echo "🔑 Loading secrets from backend/.env..."
+    export $(grep -v '^#' backend/.env | grep OPENAI_API_KEY | xargs)
+fi
+
 # Check if user has docker permissions
 USE_SUDO=""
 if ! docker info > /dev/null 2>&1; then
