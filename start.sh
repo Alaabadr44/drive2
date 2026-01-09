@@ -94,11 +94,27 @@ case "$choice" in
         ;;
     2)
         echo "⚙️  Building Backend..."
+        read -r -p "⚠️  Do you want to re-seed the database? (This DESTROYS live data!) [y/N]: " seed_choice
+        if [[ "$seed_choice" =~ ^[Yy]$ ]]; then
+            export SKIP_SEED=false
+            echo "🔥 Re-seeding Database..."
+        else
+            export SKIP_SEED=true
+            echo "🛡️  Skipping Seed (Live Data Preserved)..."
+        fi
         # We start nginx too to ensure it picks up new SSL certs
         $USE_SUDO $DOCKER_CMD up -d --force-recreate --build backend nginx
         ;;
     3)
         echo "🚀 Full Rebuild..."
+        read -r -p "⚠️  Do you want to re-seed the database? (This DESTROYS live data!) [y/N]: " seed_choice
+        if [[ "$seed_choice" =~ ^[Yy]$ ]]; then
+            export SKIP_SEED=false
+            echo "🔥 Re-seeding Database..."
+        else
+            export SKIP_SEED=true
+            echo "🛡️  Skipping Seed (Live Data Preserved)..."
+        fi
         $USE_SUDO $DOCKER_CMD up -d --force-recreate --build
         ;;
     4)
