@@ -263,29 +263,8 @@ export const CallProvider = ({ children }: { children: ReactNode }) => {
     setActiveRestaurant(null);
   }, [user?.role, callId, stopAndUploadRecording]); 
 
-  // --- Pre-request Audio Permission ---
-  useEffect(() => {
-    // Proactively request microphone access when user is logged in
-    const preRequestAudio = async () => {
-        if (!user) return;
-        
-        // Only if we don't have a stream yet
-        if (!localStream.current) {
-            console.log("Pre-requesting microphone access...");
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
-                localStream.current = stream;
-                console.log("Microphone access granted and stream ready.");
-            } catch (err) {
-                console.error("Failed to pre-request microphone:", err);
-                toast.error("Microphone permission blocked. Calls may not work.");
-            }
-        }
-    };
-    
-    
-    preRequestAudio();
-  }, [user]);
+  // --- Pre-request Audio Permission - Removed to prevent stale streams ---
+  // We now request fresh permission on every call start in setupPeerConnection
 
   // --- Audio Sounds Management ---
   useEffect(() => {
@@ -402,26 +381,26 @@ export const CallProvider = ({ children }: { children: ReactNode }) => {
       startRecording(event.streams[0]);
     };
 
-    // Use existing local stream if available, otherwise get new one
-    let stream = localStream.current;
-    if (!stream || stream.getTracks().every(t => t.readyState === 'ended')) {
-        try {
-            console.log("Getting new media stream for call...");
-            stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
-            localStream.current = stream;
-        } catch (err) {
-            console.error('Error accessing microphone:', err);
-            toast.error('Microphone access denied');
-            return null;
+    // ALWAYS get a fresh stream to ensure audio is live and not stale/muted by OS
+    let stream: MediaStream | null = null;
+    try {
+        console.log("🎙️ Requesting FRESH microphone stream for call...");
+        if (localStream.current) {
+            localStream.current.getTracks().forEach(t => t.stop());
         }
-    } else {
-        console.log("Reusing existing media stream");
+        stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+        localStream.current = stream;
+        console.log("✅ Fresh microphone stream acquired");
+    } catch (err) {
+        console.error('Error accessing microphone:', err);
+        toast.error('Microphone access denied');
+        return null;
     }
 
     if (stream) {
         stream.getTracks().forEach(track => {
             console.log(`[WebRTC] Adding local track: kind=${track.kind}, label=${track.label}, enabled=${track.enabled}, id=${track.id}`);
-            pc.addTrack(track, stream!); // Non-null assertion safe due to check
+            pc.addTrack(track, stream!); 
         });
     }
     
