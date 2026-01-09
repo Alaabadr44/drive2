@@ -615,11 +615,19 @@ export const CallProvider = ({ children }: { children: ReactNode }) => {
   // --- Watchdog: Stuck in Loading Safety Net ---
   useEffect(() => {
     if (callState === 'incall' && !remoteStream && !peerConnection.current && socket && incomingCallDataRef.current && user?.role === 'RESTAURANT') {
-         console.log("⚠️ Watchdog: Call is 'incall' but no connection yet. Retrying acceptance...");
+         console.log("⚠️ Watchdog: Call is 'incall' but no connection yet. Monitoring...");
          const timer = setTimeout(() => {
              // If still stuck after 2s
-             if (callStateRef.current === 'incall' && !peerConnection.current) {
-                 console.log("🚨 Watchdog: Re-emitting call:accept!!!");
+             if (callStateRef.current === 'incall' && !remoteStream) {
+                 console.log("🚨 Watchdog: Detected Stuck Call. Force Retrying Connection...");
+                 
+                 // Explicitly close any partial connection locally first
+                 if (peerConnection.current) {
+                    peerConnection.current.close();
+                    peerConnection.current = null;
+                 }
+                 
+                 // Re-emit accept to force BOTH sides to restart WebRTC handshake
                  socket.emit('call:accept', { callId: incomingCallDataRef.current!.callId });
              }
          }, 2000); // 2 seconds delay
