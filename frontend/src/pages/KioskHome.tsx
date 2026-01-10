@@ -491,7 +491,7 @@ export default function KioskHome() {
                     disabled={restaurant.status === 'closed'}
                     // Changed aspect-square to h-[260px] w-full (fixed height) as requested "fit spacfic fixed size".
                     // Removed shadows for cleaner transparent look.
-                    className={`group relative w-full h-[260px] flex flex-col items-center justify-center rounded-[2.5rem] overflow-hidden transition-all duration-500 animate-fade-in ${currentTileStyle} ${restaurant.status === 'closed' ? 'opacity-80 cursor-not-allowed' : 'active:scale-95'}`}
+                    className={`group relative w-full h-[260px] flex flex-col items-center justify-center rounded-3xl overflow-hidden transition-all duration-500 animate-fade-in ${currentTileStyle} ${restaurant.status === 'closed' ? 'opacity-80 cursor-not-allowed' : 'active:scale-95'}`}
                     style={{ animationDelay: `${index * 100}ms` }}
                   >
                     <div className="w-full h-full flex flex-col items-center justify-center p-4 text-center">
