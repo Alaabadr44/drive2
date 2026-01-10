@@ -162,7 +162,7 @@ export function RestaurantDetail({ restaurant, onBack, onReset }: RestaurantDeta
       />
       
       {/* Centered Menu Viewer Section */}
-      <div className="flex-1 relative flex items-center justify-center w-full h-full px-4 pb-[270px] pt-10 overflow-hidden">
+      <div className="flex-1 relative flex items-center justify-center w-full h-full px-4 pb-[320px] pt-10 overflow-hidden">
         <div className="relative w-full h-full flex items-center justify-center animate-in fade-in zoom-in duration-500">
           
           {/* Navigation Arrows */}
