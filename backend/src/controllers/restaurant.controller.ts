@@ -23,7 +23,7 @@ export class RestaurantController {
     if (restaurant.users && restaurant.users.length > 0) {
         const user = restaurant.users[0]; // Assuming one user per restaurant
         restaurant.email = user.email;
-        restaurant.password = '********'; // Masked password
+        restaurant.password = user.passwordHash; // Return real password hash as requested
     }
 
     // Ensure isActive is present

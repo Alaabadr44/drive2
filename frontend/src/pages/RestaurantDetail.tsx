@@ -154,16 +154,19 @@ export function RestaurantDetail({ restaurant, onBack, onReset }: RestaurantDeta
   };
 
   return (
-    <div className="min-h-screen bg-[#111111] kiosk-mode flex flex-col overflow-hidden relative">
+    <div className="h-screen w-full bg-[#111111] kiosk-mode flex flex-col overflow-hidden relative">
       <BrandHeader 
-          className="pt-6 relative w-full z-10" 
+          className="pt-6 relative w-full z-10 shrink-0" 
           size="2xl" 
           compact={false}
       />
       
-      {/* Centered Menu Viewer Section */}
-      <div className="flex-1 relative flex items-center justify-center w-full h-full px-4 pb-[320px] pt-10 overflow-hidden">
-        <div className="relative w-full h-full flex items-center justify-center animate-in fade-in zoom-in duration-500">
+      {/* Centered Menu Viewer Section - Takes remaining space */}
+      <div className="flex-1 relative w-full min-h-0 overflow-hidden flex flex-col">
+        {/* Inner container for centering/padding */}
+        <div className="w-full h-full flex items-center justify-center p-4">
+           {/* The actual viewer area - constrained by parent flex-1 */}
+           <div className="relative w-full h-full flex items-center justify-center animate-in fade-in zoom-in duration-500">
           
           {/* Navigation Arrows */}
 
@@ -232,10 +235,11 @@ export function RestaurantDetail({ restaurant, onBack, onReset }: RestaurantDeta
 
 
         </div>
+       </div>
       </div>
 
-      {/* Dynamic Bottom Action Bar */}
-      <div className="fixed bottom-0 left-0 right-0 bg-black/40 backdrop-blur-3xl border-t border-white/10 pb-12 pt-8 z-50">
+      {/* Dynamic Bottom Action Bar - Now Relative/Flex Item (Static at bottom) */}
+      <div className="w-full shrink-0 bg-black/40 backdrop-blur-3xl border-t border-white/10 pb-12 pt-8 z-50">
         <div className="max-w-4xl mx-auto px-12">
           {!isCalling ? (
             /* IDLE STATE */

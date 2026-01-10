@@ -257,22 +257,47 @@ const AdminRestaurants = () => {
                             <div className="space-y-4">
                                 <Label className="text-foreground">Images (Files)</Label>
                                 <div className="grid grid-cols-1 gap-4">
-                                    <div className="space-y-2">
-                                        <Label htmlFor="logo" className="text-xs text-muted-foreground">Logo</Label>
-                                        {typeof formData.logo === 'string' && formData.logo && (
-                                            <div className="mb-2">
-                                                <p className="text-xs text-muted-foreground mb-1">Current Logo:</p>
+                                    <div className="space-y-4">
+                                        <div className="flex justify-between items-center">
+                                            <Label htmlFor="logo" className="text-sm font-medium text-foreground">Logo</Label>
+                                            {formData.logo && (
+                                                <Button 
+                                                    type="button" 
+                                                    variant="ghost" 
+                                                    size="sm" 
+                                                    onClick={() => setFormData({ ...formData, logo: '' })}
+                                                    className="h-6 text-xs text-destructive hover:text-destructive hover:bg-destructive/10"
+                                                >
+                                                    Remove Logo
+                                                </Button>
+                                            )}
+                                        </div>
+                                        
+                                        {/* Logo Preview Area */}
+                                        {formData.logo ? (
+                                            <div className="relative group w-32 h-32 rounded-xl overflow-hidden border border-border bg-muted">
                                                 <img 
-                                                    src={getAccessibleImageUrl(formData.logo as string)} 
-                                                    alt="Current Logo" 
-                                                    className="h-32 w-32 object-cover rounded-md border border-border"
+                                                    src={formData.logo instanceof File ? URL.createObjectURL(formData.logo) : getAccessibleImageUrl(formData.logo as string)} 
+                                                    alt="Logo Preview" 
+                                                    className="w-full h-full object-contain"
                                                 />
                                             </div>
+                                        ) : (
+                                            <div className="w-32 h-32 rounded-xl border-2 border-dashed border-border flex items-center justify-center bg-muted/30">
+                                                <span className="text-xs text-muted-foreground">No Logo</span>
+                                            </div>
                                         )}
-                                        <Input id="logo" type="file" accept="image/*" onChange={e => {
-                                            const file = e.target.files?.[0];
-                                            if (file) setFormData({ ...formData, logo: file as unknown as string });
-                                        }} className="bg-background border-input text-foreground" />
+
+                                        <Input 
+                                            id="logo" 
+                                            type="file" 
+                                            accept="image/*" 
+                                            onChange={e => {
+                                                const file = e.target.files?.[0];
+                                                if (file) setFormData({ ...formData, logo: file });
+                                            }} 
+                                            className="bg-background border-input text-foreground" 
+                                        />
                                     </div>
                                     <div className="space-y-4">
                                         <Label className="text-sm font-bold flex justify-between items-center text-foreground">
