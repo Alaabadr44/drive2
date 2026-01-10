@@ -266,9 +266,7 @@ export function RestaurantDetail({ restaurant, onBack, onReset }: RestaurantDeta
                   <p className="text-white text-2xl font-bold tracking-tight">
                     {isRTL ? 'اطلب الآن واتصل' : 'Choose your Order and Call Now'}
                   </p>
-                  <div className="flex justify-center pt-2">
-                       <img src="/knet_logo.png" alt="KNET" className="h-6 opacity-60 grayscale hover:grayscale-0 transition-all" />
-                  </div>
+
                   {timeLeft <= 30 && (
                     <p className={`text-sm font-medium ${timeLeft < 10 ? 'text-red-400 animate-pulse' : 'text-white/50'}`}>
                         Auto-return in {timeLeft}s

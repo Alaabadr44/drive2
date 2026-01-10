@@ -476,8 +476,8 @@ export default function KioskHome() {
             <div className="grid grid-cols-3 gap-6 md:gap-10 max-w-none mx-auto justify-items-center">
               {restaurants.map((restaurant, index) => {
                 // Dynamic background based on status
-                const currentTileStyle = restaurant.status === 'closed' ? "bg-neutral-900" : "bg-white";
-                // Text color logic is irrelevant now as text is hidden, but keeping for safety if reused
+                // User requested to remove white background color for open, but keep white for closed.
+                const currentTileStyle = restaurant.status === 'closed' ? "bg-white" : "bg-transparent";
                 const isDarkText = true;
 
                 return (
@@ -489,7 +489,9 @@ export default function KioskHome() {
                       }
                     }}
                     disabled={restaurant.status === 'closed'}
-                    className={`group aspect-square relative flex flex-col items-center justify-center rounded-[2.5rem] overflow-hidden transition-all duration-500 animate-fade-in ${currentTileStyle} ${restaurant.status === 'closed' ? 'opacity-80 cursor-not-allowed' : 'active:scale-95 shadow-xl hover:shadow-2xl'}`}
+                    // Changed aspect-square to h-[260px] w-full (fixed height) as requested "fit spacfic fixed size".
+                    // Removed shadows for cleaner transparent look.
+                    className={`group relative w-full h-[260px] flex flex-col items-center justify-center rounded-[2.5rem] overflow-hidden transition-all duration-500 animate-fade-in ${currentTileStyle} ${restaurant.status === 'closed' ? 'opacity-80 cursor-not-allowed' : 'active:scale-95'}`}
                     style={{ animationDelay: `${index * 100}ms` }}
                   >
                     <div className="w-full h-full flex flex-col items-center justify-center p-4 text-center">
@@ -515,10 +517,7 @@ export default function KioskHome() {
                       </div>
                     )}
                     
-                    {/* KNET Logo */}
-                    <div className="absolute bottom-6 flex justify-center w-full">
-                         <img src="/knet_logo.png" alt="KNET" className="h-6 opacity-80" />
-                    </div>
+
 
                     {restaurant.status === 'closed' && (
                       <div className="absolute inset-0 flex items-center justify-center bg-black/60 backdrop-grayscale">
