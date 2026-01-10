@@ -64,6 +64,37 @@ const RestaurantDashboard = () => {
         }
     };
     
+    // Sound Permission State
+    const [soundPermission, setSoundPermission] = useState<PermissionState>('prompt');
+
+    useEffect(() => {
+        // Try to play a silent sound to check autoplay
+        const checkAudio = async () => {
+             try {
+                 const audio = new Audio(SOUNDS.BUSY); // Minimal sound
+                 audio.volume = 0;
+                 await audio.play();
+                 setSoundPermission('granted');
+             } catch (e) {
+                 console.warn("Autoplay blocked, user interaction required");
+                 setSoundPermission('denied'); // or 'prompt'
+             }
+        };
+        checkAudio();
+    }, []);
+
+    const enableSound = async () => {
+        try {
+            const audio = new Audio(SOUNDS.BUSY);
+            audio.volume = 0;
+            await audio.play();
+            setSoundPermission('granted');
+            toast.success("Sound enabled");
+        } catch (e) {
+            toast.error("Could not enable sound. Please click again.");
+        }
+    };
+    
     // Ensure audio plays when remote stream is available
     useEffect(() => {
         if (audioRef.current && remoteStream && (callState === 'incall' || callState === 'ringing')) {
@@ -305,6 +336,19 @@ const RestaurantDashboard = () => {
                         >
                             <Mic className="w-4 h-4" />
                             {micPermission === 'denied' ? 'Mic Blocked' : 'Enable Mic'}
+                        </Button>
+                    )}
+
+                    {/* Sound Permission Indicator */}
+                    {(soundPermission === 'denied' || soundPermission === 'prompt') && (
+                        <Button 
+                            variant={soundPermission === 'denied' ? "destructive" : "secondary"}
+                            size="sm"
+                            className="mr-2 gap-2"
+                            onClick={enableSound}
+                        >
+                            <Volume2 className="w-4 h-4" />
+                            {soundPermission === 'denied' ? 'Sound Blocked' : 'Enable Sound'}
                         </Button>
                     )}
 

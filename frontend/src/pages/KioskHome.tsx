@@ -14,6 +14,7 @@ import { LogOut } from 'lucide-react';
 import { BrandHeader } from '@/components/kiosk/BrandHeader';
 import { SocketEventTracker } from '@/components/debug/SocketEventTracker';
 import { config } from '@/config';
+import { SOUNDS } from '@/constants/sounds';
 
 
 export default function KioskHome() {
@@ -117,6 +118,38 @@ export default function KioskHome() {
       } catch (e) {
           toast.error("Microphone access denied");
           setMicPermission('denied');
+      }
+  };
+
+  // Sound Permission Logic
+  const [soundPermission, setSoundPermission] = useState<PermissionState>('prompt');
+
+  useEffect(() => {
+    // Try to play a silent sound to check autoplay
+    const checkAudio = async () => {
+         try {
+             const audio = new Audio(SOUNDS.BUSY || ''); // Minimal sound fallbacks
+             audio.volume = 0;
+             await audio.play();
+             setSoundPermission('granted');
+         } catch (e) {
+             console.warn("Autoplay blocked, user interaction required");
+             setSoundPermission('denied'); // or 'prompt'
+         }
+    };
+    checkAudio();
+  }, []);
+
+  const enableSound = async () => {
+      try {
+          // You might need to import SOUNDS if not already
+          const audio = new Audio(SOUNDS.BUSY);
+          audio.volume = 0;
+          await audio.play();
+          setSoundPermission('granted');
+          toast.success("Sound enabled");
+      } catch (e) {
+          toast.error("Could not enable sound. Please click again.");
       }
   };
 
@@ -343,6 +376,14 @@ export default function KioskHome() {
                                 className="px-4 py-2 bg-red-500/20 border border-red-500 text-red-400 rounded-full text-sm font-bold flex items-center gap-2 hover:bg-red-500/30 transition-colors z-50"
                             >
                                 ⚠️ Enable Microphone to Order
+                            </button>
+                        )}
+                        {(soundPermission === 'denied' || soundPermission === 'prompt') && (
+                            <button 
+                                onClick={(e) => { e.stopPropagation(); enableSound(); }}
+                                className="px-4 py-2 bg-red-500/20 border border-red-500 text-red-400 rounded-full text-sm font-bold flex items-center gap-2 hover:bg-red-500/30 transition-colors z-50 mt-2"
+                            >
+                                🔊 Enable Sound to Order
                             </button>
                         )}
                     </div>

@@ -134,7 +134,15 @@ const CallAudioPlayer = ({ call }: { call: CallLog }) => {
                         const link = document.createElement('a');
                         link.href = url;
                         link.target = '_blank';
-                        link.download = `recording-${call.id}.${call.recordingUrl!.split('.').pop()}`;
+                        
+                        // Extract extension or default to .webm
+                        let ext = call.recordingUrl!.split('.').pop() || 'webm';
+                        // If extension is too long (likely full path), default to webm
+                        if (ext.length > 5 || ext.includes('/')) {
+                            ext = 'webm';
+                        }
+                        
+                        link.download = `recording-${call.id}.${ext}`;
                         document.body.appendChild(link);
                         link.click();
                         document.body.removeChild(link);

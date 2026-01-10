@@ -106,7 +106,7 @@ const storage = multer.diskStorage({
   },
   filename: (req, file, cb) => {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, 'rec-' + uniqueSuffix + path.extname(file.originalname) || '.webm');
+    cb(null, 'rec-' + uniqueSuffix + (path.extname(file.originalname) || '.webm'));
   }
 });
 const upload = multer({ storage: storage });
