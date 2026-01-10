@@ -18,6 +18,10 @@ RUN npm run build
 # Production Stage
 FROM node:18-alpine
 
+# Install FFmpeg for audio conversion
+RUN apk add --no-cache ffmpeg
+
+
 WORKDIR /app
 
 # Copy package files

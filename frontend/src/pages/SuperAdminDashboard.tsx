@@ -2,12 +2,45 @@ import { useAuth } from "@/contexts/AuthContext";
 import { AdminLayout } from "@/components/layouts/AdminLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAdmin } from "@/contexts/AdminContext";
-import { Store, Monitor, Zap, RefreshCw, ShieldCheck, Smartphone } from "lucide-react";
+import { Store, Monitor, Zap, RefreshCw, ShieldCheck, Smartphone, Phone, Clock, HardDrive } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { api } from "@/services/api";
+import { useState, useEffect } from "react";
 
 const SuperAdminDashboard = () => {
   const { user } = useAuth();
   const { stats, restaurants, screens, entityStatuses, triggerRefresh, liveCalls } = useAdmin();
+  const [callStats, setCallStats] = useState({ totalCalls: 0, totalDuration: 0, totalRecordingSize: 0 });
+
+  useEffect(() => {
+      const fetchCallStats = async () => {
+          if (!user?.token) return;
+          try {
+              const res = await api.get('/calls/stats', user.token);
+              if (res.data) setCallStats(res.data);
+          } catch (e) {
+              console.error("Failed to fetch call stats", e);
+          }
+      };
+      fetchCallStats();
+  }, [user]);
+
+  const formatBytes = (bytes: number) => {
+      if (!bytes) return '0 B';
+      const k = 1024;
+      const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+
+  const formatDuration = (seconds: number) => {
+      if (!seconds) return '0s';
+      const hrs = Math.floor(seconds / 3600);
+      const mins = Math.floor((seconds % 3600) / 60);
+      const secs = seconds % 60;
+      if (hrs > 0) return `${hrs}h ${mins}m`;
+      return `${mins}m ${secs}s`;
+  };
 
   // Unique colors for different active calls to visually pair them
   const CALL_COLORS = [
@@ -93,7 +126,59 @@ const SuperAdminDashboard = () => {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                    {/* ... stats cards ... */}
+                     <Card className="p-6 rounded-[2rem] bg-gradient-to-br from-blue-500/10 to-blue-500/5 border-blue-200/50 shadow-sm">
+                        <CardHeader className="p-0 pb-2">
+                             <CardTitle className="text-sm font-bold text-blue-600 uppercase tracking-wider flex items-center gap-2">
+                                 <Phone className="w-4 h-4" /> Total Calls
+                             </CardTitle>
+                        </CardHeader>
+                        <CardContent className="p-0">
+                            <div className="text-4xl font-black text-blue-900 dark:text-blue-100">{callStats.totalCalls}</div>
+                            <p className="text-xs text-blue-500 font-medium mt-1">Lifetime total</p>
+                        </CardContent>
+                     </Card>
+
+                     <Card className="p-6 rounded-[2rem] bg-gradient-to-br from-emerald-500/10 to-emerald-500/5 border-emerald-200/50 shadow-sm">
+                        <CardHeader className="p-0 pb-2">
+                             <CardTitle className="text-sm font-bold text-emerald-600 uppercase tracking-wider flex items-center gap-2">
+                                 <Clock className="w-4 h-4" /> Total Duration
+                             </CardTitle>
+                        </CardHeader>
+                        <CardContent className="p-0">
+                            <div className="text-4xl font-black text-emerald-900 dark:text-emerald-100">{formatDuration(callStats.totalDuration)}</div>
+                            <p className="text-xs text-emerald-500 font-medium mt-1">Across all calls</p>
+                        </CardContent>
+                     </Card>
+
+                     <Card className="p-6 rounded-[2rem] bg-gradient-to-br from-purple-500/10 to-purple-500/5 border-purple-200/50 shadow-sm">
+                        <CardHeader className="p-0 pb-2">
+                             <CardTitle className="text-sm font-bold text-purple-600 uppercase tracking-wider flex items-center gap-2">
+                                 <HardDrive className="w-4 h-4" /> Storage Used
+                             </CardTitle>
+                        </CardHeader>
+                        <CardContent className="p-0">
+                            <div className="text-4xl font-black text-purple-900 dark:text-purple-100">{formatBytes(callStats.totalRecordingSize)}</div>
+                            <p className="text-xs text-purple-500 font-medium mt-1">Audio recordings</p>
+                        </CardContent>
+                     </Card>
+
+                     <Card className="p-6 rounded-[2rem] bg-gradient-to-br from-orange-500/10 to-orange-500/5 border-orange-200/50 shadow-sm">
+                        <CardHeader className="p-0 pb-2">
+                             <CardTitle className="text-sm font-bold text-orange-600 uppercase tracking-wider flex items-center gap-2">
+                                 <Store className="w-4 h-4" /> Network
+                             </CardTitle>
+                        </CardHeader>
+                        <CardContent className="p-0">
+                            <div className="flex items-baseline gap-1">
+                                <span className="text-4xl font-black text-orange-900 dark:text-orange-100">{displayStats.totalRestaurants}</span>
+                                <span className="text-sm font-bold text-orange-400">Rest.</span>
+                                <span className="text-2xl font-black text-gray-300 mx-2">/</span>
+                                <span className="text-4xl font-black text-orange-900 dark:text-orange-100">{displayStats.totalScreens}</span>
+                                <span className="text-sm font-bold text-orange-400">Screens</span>
+                            </div>
+                            <p className="text-xs text-orange-500 font-medium mt-1">Active Entities</p>
+                        </CardContent>
+                     </Card>
                 </div>
 
                 {/* ADDDED: Live Network Monitor & Remote Controls */}

@@ -51,6 +51,10 @@ export class CallSession {
   @Column({ nullable: true })
   recordingUrl?: string;
 
+  @Column({ type: "bigint", nullable: true })
+  recordingSize?: string; // TypeORM returns bigint as string
+
+
   @ManyToOne(() => Screen, (screen) => screen.callSessions)
   @JoinColumn({ name: "kioskId" })
   screen!: Screen;

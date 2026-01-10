@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
+import { config } from '@/config';
 
 const DEBUG_CREDENTIALS = [
   // Screens
@@ -59,6 +60,40 @@ const Login = () => {
     }
   };
 
+  // Auto-login logic
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const emailParam = params.get('email');
+    const passwordParam = params.get('password');
+    const autoLoginParam = params.get('autologin');
+
+    if (emailParam) setEmail(emailParam);
+    if (passwordParam) setPassword(passwordParam);
+
+    if (autoLoginParam === 'true' && emailParam && passwordParam && !loading) {
+       // Only attempt login if not already loading and params exist
+       const autoLogin = async () => {
+         setLoading(true);
+          try {
+            await login(emailParam, passwordParam);
+            // Success toast handled by login function or suppressed
+          } catch (error) {
+             console.error("Auto-login failed:", error);
+             toast({
+              variant: "destructive",
+              title: "Auto-Login Failed",
+              description: "Check your credentials link.",
+            });
+          } finally {
+            setLoading(false);
+          }
+       };
+       autoLogin();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Run once on mount
+
+
   const handleDebugFill = (value: string) => {
     const credential = DEBUG_CREDENTIALS.find(c => c.label === value);
     if (credential) {
@@ -102,30 +137,33 @@ const Login = () => {
               {loading ? "Logging in..." : "Login"}
             </Button>
             
-            <div className="pt-4 border-t">
-              <Label className="text-xs text-muted-foreground mb-2 block">Debug Checkin</Label>
-              <Select onValueChange={handleDebugFill}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select Debug Credential" />
-                </SelectTrigger>
-                <SelectContent>
-                  <div className="max-h-[200px] overflow-y-auto">
-                    <div className="px-2 py-1.5 text-sm font-semibold text-muted-foreground">Screens</div>
-                    {DEBUG_CREDENTIALS.filter(c => c.type === 'Screen').map((cred) => (
-                      <SelectItem key={cred.label} value={cred.label}>
-                        {cred.label}
-                      </SelectItem>
-                    ))}
-                    <div className="px-2 py-1.5 text-sm font-semibold text-muted-foreground border-t mt-1 pt-2">Restaurants</div>
-                     {DEBUG_CREDENTIALS.filter(c => c.type === 'Restaurant').map((cred) => (
-                      <SelectItem key={cred.label} value={cred.label}>
-                        {cred.label}
-                      </SelectItem>
-                    ))}
-                  </div>
-                </SelectContent>
-              </Select>
-            </div>
+            {/* Debug Checkin - Controlled by config */}
+            {config.enableLoginDebug && (
+             <div className="pt-4 border-t">
+               <Label className="text-xs text-muted-foreground mb-2 block">Debug Checkin</Label>
+               <Select onValueChange={handleDebugFill}>
+                 <SelectTrigger>
+                   <SelectValue placeholder="Select Debug Credential" />
+                 </SelectTrigger>
+                 <SelectContent>
+                   <div className="max-h-[200px] overflow-y-auto">
+                     <div className="px-2 py-1.5 text-sm font-semibold text-muted-foreground">Screens</div>
+                     {DEBUG_CREDENTIALS.filter(c => c.type === 'Screen').map((cred) => (
+                       <SelectItem key={cred.label} value={cred.label}>
+                         {cred.label}
+                       </SelectItem>
+                     ))}
+                     <div className="px-2 py-1.5 text-sm font-semibold text-muted-foreground border-t mt-1 pt-2">Restaurants</div>
+                      {DEBUG_CREDENTIALS.filter(c => c.type === 'Restaurant').map((cred) => (
+                       <SelectItem key={cred.label} value={cred.label}>
+                         {cred.label}
+                       </SelectItem>
+                     ))}
+                   </div>
+                 </SelectContent>
+               </Select>
+             </div>
+            )}
 
           </form>
         </CardContent>

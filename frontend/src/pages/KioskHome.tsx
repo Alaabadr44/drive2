@@ -73,18 +73,29 @@ export default function KioskHome() {
   }, []);
 
   // Request microphone permission on mount
+  // Request microphone permission on mount and manage state
+  const [micPermission, setMicPermission] = useState<PermissionState>('granted'); 
+
   useEffect(() => {
+    if (navigator.permissions && navigator.permissions.query) {
+        navigator.permissions.query({ name: 'microphone' as any }).then(p => {
+            setMicPermission(p.state);
+            p.onchange = () => setMicPermission(p.state);
+        });
+    }
+
     const requestMicPermission = async () => {
+      // Only auto-request if we are a screen
       if (user?.role === 'SCREEN') {
         try {
           console.log('🎤 Requesting microphone permission...');
           const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
           console.log('✅ Microphone permission granted');
-          // We only need the permission, so we can stop the tracks immediately
           stream.getTracks().forEach(track => track.stop());
+          setMicPermission('granted');
         } catch (error) {
           console.error('❌ Microphone permission denied:', error);
-          // Toast removed
+          setMicPermission('denied');
         }
       }
     };
@@ -96,6 +107,18 @@ export default function KioskHome() {
 
     return () => clearTimeout(timer);
   }, [user?.role]);
+
+  const requestMicManual = async () => {
+      try {
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          stream.getTracks().forEach(t => t.stop());
+          setMicPermission('granted');
+          toast.success("Microphone access enabled");
+      } catch (e) {
+          toast.error("Microphone access denied");
+          setMicPermission('denied');
+      }
+  };
 
   useEffect(() => {
     const fetchMyRestaurants = async () => {
@@ -309,11 +332,19 @@ export default function KioskHome() {
                 
                 <div className="relative z-10 flex-1 flex flex-col items-center justify-center p-8 gap-16 pt-24">
                     {/* Big Brand Header */}
-                    <div className="animate-in zoom-in duration-700">
+                    <div className="animate-in zoom-in duration-700 flex flex-col items-center gap-4">
                         <BrandHeader 
                             size="4xl" 
                             logoUrl={(user as any)?.logoUrl || (user as any)?.logo}
                         />
+                        {(micPermission === 'denied' || micPermission === 'prompt') && (
+                            <button 
+                                onClick={(e) => { e.stopPropagation(); requestMicManual(); }}
+                                className="px-4 py-2 bg-red-500/20 border border-red-500 text-red-400 rounded-full text-sm font-bold flex items-center gap-2 hover:bg-red-500/30 transition-colors z-50"
+                            >
+                                ⚠️ Enable Microphone to Order
+                            </button>
+                        )}
                     </div>
 
                     {/* Order Now Button */}
@@ -442,6 +473,11 @@ export default function KioskHome() {
                         <span className="relative inline-flex rounded-full h-4 w-4 bg-green-500 border-2 border-white"></span>
                       </div>
                     )}
+                    
+                    {/* KNET Logo */}
+                    <div className="absolute bottom-6 flex justify-center w-full">
+                         <img src="/knet_logo.png" alt="KNET" className="h-6 opacity-80" />
+                    </div>
 
                     {restaurant.status === 'closed' && (
                       <div className="absolute inset-0 flex items-center justify-center bg-black/60 backdrop-grayscale">

@@ -53,6 +53,7 @@ interface CallLog {
   duration?: number;
   status: 'completed' | 'missed' | 'rejected' | 'busy' | 'failed';
   recordingUrl?: string; // Add optional recording URL
+  recordingSize?: string; // TypeORM bigint string
   restaurant: {
     id: string;
     nameEn: string;
@@ -153,7 +154,7 @@ export default function AdminCalls() {
   const [loading, setLoading] = useState(true);
   const [meta, setMeta] = useState<PaginationMeta | null>(null);
   const [page, setPage] = useState(1);
-  const [limit] = useState(20);
+  const [limit, setLimit] = useState(20);
   const [playingCall, setPlayingCall] = useState<CallLog | null>(null);
 
   // Filter State
@@ -239,6 +240,17 @@ export default function AdminCalls() {
       default:
         return <Badge variant="secondary">{status}</Badge>;
     }
+
+  };
+
+  const formatBytes = (bytes?: string | number) => {
+      if (!bytes) return '-';
+      const num = Number(bytes);
+      if (isNaN(num)) return '-';
+      const k = 1024;
+      const sizes = ['B', 'KB', 'MB', 'GB'];
+      const i = Math.floor(Math.log(num) / Math.log(k));
+      return parseFloat((num / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
   };
 
   return (
@@ -389,10 +401,10 @@ export default function AdminCalls() {
                     <TableHead className="w-[200px]">Time</TableHead>
                     <TableHead>Restaurant</TableHead>
                     <TableHead>Screen</TableHead>
-                     {/* HIDDEN: Duration and Status 
-                     <TableHead>Duration</TableHead>
-                     <TableHead>Status</TableHead> 
-                     */}
+
+                    <TableHead>Duration</TableHead>
+                    <TableHead>Size</TableHead>
+                    <TableHead>Status</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -431,7 +443,6 @@ export default function AdminCalls() {
                         <TableCell>
                             <span className="font-medium">{call.screen?.name || 'Unknown Screen'}</span>
                         </TableCell>
-                        {/* HIDDEN: Duration and Status
                         <TableCell>
                             <div className="flex items-center gap-1 text-muted-foreground">
                                 <Timer className="w-3 h-3" />
@@ -439,9 +450,11 @@ export default function AdminCalls() {
                             </div>
                         </TableCell>
                         <TableCell>
+                            <span className="text-xs font-mono text-muted-foreground">{formatBytes(call.recordingSize)}</span>
+                        </TableCell>
+                        <TableCell>
                             {getStatusBadge(call.status)}
                         </TableCell>
-                        */}
                         <TableCell className="text-right">
                             <div className="flex items-center justify-end gap-2">
                               {call.recordingUrl && (
@@ -470,29 +483,49 @@ export default function AdminCalls() {
               </Table>
             </div>
 
-            {/* Pagination */}
             {meta && (
-                <div className="flex items-center justify-between mt-4">
+                <div className="flex flex-col md:flex-row items-center justify-between mt-4 gap-4">
                     <p className="text-sm text-muted-foreground">
                         Showing page {meta.currentPage} of {meta.totalPages} ({meta.totalItems} total)
                     </p>
-                    <div className="flex items-center gap-2">
-                        <Button 
-                            variant="outline" 
-                            size="sm" 
-                            onClick={() => setPage(p => Math.max(1, p - 1))}
-                            disabled={page === 1}
-                        >
-                            Previous
-                        </Button>
-                        <Button 
-                            variant="outline" 
-                            size="sm" 
-                            onClick={() => setPage(p => Math.min(meta.totalPages, p + 1))}
-                            disabled={page === meta.totalPages}
-                        >
-                            Next
-                        </Button>
+                    
+                    <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-2">
+                            <span className="text-sm text-muted-foreground">Items per page:</span>
+                            <Select value={String(limit)} onValueChange={(val) => {
+                                setLimit(Number(val));
+                                setPage(1); // Reset to page 1 on limit change
+                            }}>
+                                <SelectTrigger className="w-[70px] h-8">
+                                    <SelectValue placeholder="20" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="10">10</SelectItem>
+                                    <SelectItem value="20">20</SelectItem>
+                                    <SelectItem value="50">50</SelectItem>
+                                    <SelectItem value="100">100</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                            <Button 
+                                variant="outline" 
+                                size="sm" 
+                                onClick={() => setPage(p => Math.max(1, p - 1))}
+                                disabled={page === 1}
+                            >
+                                Previous
+                            </Button>
+                            <Button 
+                                variant="outline" 
+                                size="sm" 
+                                onClick={() => setPage(p => Math.min(meta.totalPages, p + 1))}
+                                disabled={page === meta.totalPages}
+                            >
+                                Next
+                            </Button>
+                        </div>
                     </div>
                 </div>
             )}

@@ -99,10 +99,11 @@ echo "Select Build Option:"
 echo "1) 🎨 Frontend Only  (Safe, keeps data)"
 echo "2) ⚙️  Backend Only   (Re-seeds database!)"
 echo "3) 🚀 Full Rebuild   (Re-seeds database!)"
-echo "4) � Restart All    (No Build, Fast)"
-echo "5) �🚪 Exit           (Do nothing)"
+echo "4) 🔄 Restart All    (No Build, Fast)"
+echo "5) 👋 Exiting           (Do nothing)"
+echo "6) 🛠️ Generate Login Scripts"
 echo "---------------------------------------"
-read -r -p "Enter choice [1-5]: " choice
+read -r -p "Enter choice [1-6]: " choice
 
 # Check if docker-compose exists, otherwise use "docker compose"
 DOCKER_CMD="docker compose"
@@ -145,11 +146,22 @@ case "$choice" in
         $USE_SUDO $DOCKER_CMD up -d --force-recreate --build
         ;;
     4)
-        echo "� Restarting Services..."
+        echo "🔄 Restarting Services..."
         $USE_SUDO $DOCKER_CMD restart
         ;;
     5)
-        echo "�👋 Exiting."
+        echo "👋 Exiting."
+        exit 0
+        ;;
+    6)
+        echo "🛠️ Generating Login Scripts..."
+        SCRIPT_PATH="backend/src/scripts/generate-login-scripts.sh"
+        if [ -f "$SCRIPT_PATH" ]; then
+             chmod +x "$SCRIPT_PATH"
+             ./$SCRIPT_PATH "https://$HOST_IP"
+        else
+             echo "❌ Script not found: $SCRIPT_PATH"
+        fi
         exit 0
         ;;
     *)

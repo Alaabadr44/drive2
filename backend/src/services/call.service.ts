@@ -230,7 +230,7 @@ export class CallService {
     };
   }
 
-  async saveRecording(callId: string, recordingUrl: string) {
+  async saveRecording(callId: string, recordingUrl: string, fileSize?: number) {
     const call = await this.callRepository.findOne({ where: { id: callId } });
     
     if (!call) {
@@ -243,7 +243,36 @@ export class CallService {
         return call;
     }
 
-    await this.callRepository.update(callId, { recordingUrl });
+    await this.callRepository.update(callId, { 
+        recordingUrl,
+        recordingSize: fileSize ? String(fileSize) : undefined // TypeORM bigint expects string
+    });
+    return this.callRepository.findOne({ where: { id: callId } });
+  }
+
+  async getStats() {
+    const totalCalls = await this.callRepository.count();
+    
+    // Aggregate total duration
+    const { totalDuration } = await this.callRepository
+        .createQueryBuilder("call")
+        .select("SUM(call.durationSec)", "totalDuration")
+        .where("call.durationSec IS NOT NULL")
+        .getRawOne();
+
+    // Aggregate total recording size
+    const { totalSize } = await this.callRepository
+        .createQueryBuilder("call")
+        .select("SUM(CAST(call.recordingSize AS BIGINT))", "totalSize")
+        .getRawOne();
+
+    return {
+        totalCalls,
+        totalDuration: parseInt(totalDuration || '0'),
+        totalRecordingSize: parseInt(totalSize || '0') // In bytes
+    };
+  }
+  async getCallById(callId: string) {
     return this.callRepository.findOne({ where: { id: callId } });
   }
 }

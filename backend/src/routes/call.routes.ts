@@ -142,4 +142,11 @@ router.get('/', authenticate, authorize([Role.SUPER_ADMIN]), controller.getAll.b
  */
 router.post('/:id/recording', upload.single('recording'), controller.uploadRecording.bind(controller));
 
+// Admin Stats
+router.get('/stats', authenticate, authorize([Role.SUPER_ADMIN]), controller.getCallStats.bind(controller));
+
+// Download Recording (MP3 Conversion)
+router.get('/:id/download', controller.downloadRecording.bind(controller));
+
+
 export default router;

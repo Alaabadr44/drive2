@@ -34,6 +34,36 @@ const RestaurantDashboard = () => {
     const hasRefreshedRef = useRef(false);
     const audioRef = useRef<HTMLAudioElement>(null);
     
+    // Mic Permission State
+    const [micPermission, setMicPermission] = useState<PermissionState>('granted'); // Default to granted to avoid flicker if API not supported
+
+    useEffect(() => {
+        if (navigator.permissions && navigator.permissions.query) {
+            navigator.permissions.query({ name: 'microphone' as any }).then(p => {
+                setMicPermission(p.state);
+                p.onchange = () => {
+                    console.log("Mic permission changed:", p.state);
+                    setMicPermission(p.state);
+                };
+            }).catch(() => {
+                console.warn("Permissions API not supported for microphone");
+            });
+        }
+    }, []);
+
+    const requestMic = async () => {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            stream.getTracks().forEach(t => t.stop());
+            setMicPermission('granted');
+            toast.success("Microphone access granted");
+        } catch (err) {
+            console.error("Mic request denied:", err);
+            setMicPermission('denied');
+            toast.error("Microphone access denied. Please check browser settings.");
+        }
+    };
+    
     // Ensure audio plays when remote stream is available
     useEffect(() => {
         if (audioRef.current && remoteStream && (callState === 'incall' || callState === 'ringing')) {
@@ -42,7 +72,7 @@ const RestaurantDashboard = () => {
             
             // Debug Remote Stream
             remoteStream.getAudioTracks().forEach(track => {
-                console.log(`[Audio Debug] Track ${track.id}: enabled=${track.enabled}, muted=${track.muted}, readyState=${track.readyState}`);
+                // console.log(`[Audio Debug] Track ${track.id}: enabled=${track.enabled}, muted=${track.muted}, readyState=${track.readyState}`);
                 // Force enable just in case
                 track.enabled = true;
             });
@@ -53,7 +83,7 @@ const RestaurantDashboard = () => {
             const tryPlay = async () => {
                 try {
                     await audioRef.current?.play();
-                    console.log("[Audio Debug] Audio playback started successfully");
+                    // console.log("[Audio Debug] Audio playback started successfully");
                     setHasAudioError(false);
                 } catch (e) {
                     console.error("[Audio Debug] Error playing audio (Autoplay blocked?):", e);
@@ -66,7 +96,7 @@ const RestaurantDashboard = () => {
             const checkInterval = setInterval(() => {
                  remoteStream.getAudioTracks().forEach(track => {
                     if (track.muted || !track.enabled) {
-                         console.warn(`[Audio Debug] Track became unusable: muted=${track.muted}, enabled=${track.enabled}`);
+                         // console.warn(`[Audio Debug] Track became unusable: muted=${track.muted}, enabled=${track.enabled}`);
                     }
                 });
             }, 2000);
@@ -265,6 +295,19 @@ const RestaurantDashboard = () => {
                     </div>
                 </div>
                 <div className="flex items-center gap-3">
+                    {/* Mic Permission Indicator */}
+                    {(micPermission === 'denied' || micPermission === 'prompt') && (
+                        <Button 
+                            variant={micPermission === 'denied' ? "destructive" : "secondary"}
+                            size="sm"
+                            className="mr-2 gap-2"
+                            onClick={requestMic}
+                        >
+                            <Mic className="w-4 h-4" />
+                            {micPermission === 'denied' ? 'Mic Blocked' : 'Enable Mic'}
+                        </Button>
+                    )}
+
                     {callState !== 'incall' && callState !== 'ringing' && (
                         <>
                             <Button 
