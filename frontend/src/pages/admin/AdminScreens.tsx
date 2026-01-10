@@ -62,10 +62,16 @@ const AdminScreens = () => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
+            const submitData = { ...formData };
+            // Ignore password if it is stars/masked
+            if (submitData.password && /^[*●•]+$/.test(submitData.password)) {
+                delete submitData.password;
+            }
+
             if (editingScreen) {
-                await updateScreen(editingScreen.id, formData);
+                await updateScreen(editingScreen.id, submitData);
             } else {
-                await addScreen(formData as Omit<Screen, 'id'>);
+                await addScreen(submitData as Omit<Screen, 'id'>);
             }
             setIsOpen(false);
             resetForm();

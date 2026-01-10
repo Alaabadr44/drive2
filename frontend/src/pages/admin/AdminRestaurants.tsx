@@ -87,10 +87,16 @@ const AdminRestaurants = () => {
         e.preventDefault();
         setIsSubmitting(true);
         try {
+            const submitData = { ...formData };
+            // Ignore password if it is stars/masked
+            if (submitData.password && /^[*●•]+$/.test(submitData.password)) {
+                delete submitData.password;
+            }
+
             if (editingRestaurant) {
-                await updateRestaurant(editingRestaurant.id, formData);
+                await updateRestaurant(editingRestaurant.id, submitData);
             } else {
-                await addRestaurant(formData as Omit<Restaurant, 'id'>);
+                await addRestaurant(submitData as Omit<Restaurant, 'id'>);
             }
             setIsOpen(false);
             resetForm();
