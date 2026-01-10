@@ -11,7 +11,8 @@
     "dev": "concurrently \"nodemon src/server.ts\" \"npm run dev:frontend\"",
     "dev:frontend": "npm run dev --workspace=kiosk-frontend",
     "build": "tsc",
-    "seed": "ts-node src/scripts/seed.ts",
+    "seed": "node dist/scripts/seed.js",
+    "restore-passwords": "node dist/scripts/restore-passwords.js",
     "start": "node dist/server.js"
   },
   "keywords": [],

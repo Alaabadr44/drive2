@@ -102,8 +102,9 @@ echo "3) 🚀 Full Rebuild   (Re-seeds database!)"
 echo "4) 🔄 Restart All    (No Build, Fast)"
 echo "5) 👋 Exiting           (Do nothing)"
 echo "6) 🛠️ Generate Login Scripts"
+echo "7) 🔐 Restore Passwords (from credentials file)"
 echo "---------------------------------------"
-read -r -p "Enter choice [1-6]: " choice
+read -r -p "Enter choice [1-7]: " choice
 
 # Check if docker-compose exists, otherwise use "docker compose"
 DOCKER_CMD="docker compose"
@@ -162,6 +163,12 @@ case "$choice" in
         else
              echo "❌ Script not found: $SCRIPT_PATH"
         fi
+        exit 0
+        ;;
+    7)
+        echo "🔐 Restoring Passwords..."
+        echo "   Running script inside backend container..."
+        $USE_SUDO $DOCKER_CMD exec backend npm run restore-passwords
         exit 0
         ;;
     *)
