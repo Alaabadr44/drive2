@@ -52,7 +52,8 @@ const AdminRestaurants = () => {
             nameEn: '', nameAr: '',
             phone: '', status: 'available',
             logo: '', menuImages: [],
-            email: '', password: '', contactPhone: ''
+            email: '', password: '', contactPhone: '',
+            isVisible: true
         });
         setEditingRestaurant(null);
     };
@@ -74,6 +75,7 @@ const AdminRestaurants = () => {
                     ? restaurant.menus.map(m => typeof m === 'string' ? m : (m as { imageUrl?: string; url?: string }).imageUrl || (m as { imageUrl?: string; url?: string }).url).filter(Boolean)
                     : (restaurant.menuImageUrl ? [restaurant.menuImageUrl] : []),
                 phone: restaurant.phone || '',
+                isVisible: restaurant.isActive ?? true
             });
         } else {
             resetForm();
@@ -252,6 +254,15 @@ const AdminRestaurants = () => {
                                         <option value="busy">Busy</option>
                                     </select>
                                 </div>
+                            </div>
+                            
+                            <div className="flex items-center space-x-2">
+                                <Switch 
+                                    id="isVisible"
+                                    checked={formData.isVisible ?? true}
+                                    onCheckedChange={(checked) => setFormData({ ...formData, isVisible: checked })}
+                                />
+                                <Label htmlFor="isVisible" className="text-foreground">Visible on Kiosk (Active)</Label>
                             </div>
 
                             <div className="space-y-4">
