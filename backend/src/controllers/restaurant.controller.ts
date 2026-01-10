@@ -1,6 +1,8 @@
 import { Request, Response } from 'express';
 import { RestaurantService } from '../services/restaurant.service';
 import { AiService } from '../services/ai.service';
+import * as fs from 'fs';
+import * as path from 'path';
 
 const restaurantService = new RestaurantService();
 const aiService = new AiService();
@@ -23,7 +25,59 @@ export class RestaurantController {
     if (restaurant.users && restaurant.users.length > 0) {
         const user = restaurant.users[0]; // Assuming one user per restaurant
         restaurant.email = user.email;
-        restaurant.password = user.passwordHash; // Return real password hash as requested
+        // restaurant.password = user.passwordHash; // Return real password hash as requested (PREVIOUS)
+        
+        // NEW: Try to fetch REAL plaintext password from credentials file
+        try {
+            // Try multiple paths to support Docker and Local Development
+            const possiblePaths = [
+                '/app/credentials_restored.txt', // Docker volume mount
+                path.join(process.cwd(), '../credentials_restored.txt'), // Local dev (from backend dir)
+                path.join(process.cwd(), 'credentials_restored.txt'), // Possible local root run
+                path.resolve(__dirname, '../../../../credentials_restored.txt') // Relative from src/controllers
+            ];
+
+            let credPath = '';
+            for (const p of possiblePaths) {
+                if (fs.existsSync(p)) {
+                    credPath = p;
+                    break;
+                }
+            }
+
+            if (credPath) {
+                const content = fs.readFileSync(credPath, 'utf8');
+                const lines = content.split('\n');
+                let foundPass = null;
+                
+                // Simple parser matching the file structure
+                for (let i = 0; i < lines.length; i++) {
+                    const line = lines[i].trim();
+                     // Check if this block matches our email
+                    if (line.toLowerCase().startsWith('email:') && line.toLowerCase().includes(restaurant.email.toLowerCase())) {
+                         // The next line should be the password
+                         if (i + 1 < lines.length) {
+                             const passLine = lines[i+1].trim();
+                             if (passLine.startsWith('Password:')) {
+                                 foundPass = passLine.replace('Password:', '').trim();
+                                 break;
+                             }
+                         }
+                    }
+                }
+                
+                if (foundPass) {
+                    restaurant.password = foundPass;
+                } else {
+                     restaurant.password = user.passwordHash; // Fallback to hash if not found in file
+                }
+            } else {
+                 restaurant.password = user.passwordHash; // Fallback if file missing
+            }
+        } catch (e) {
+            console.error("Failed to read credentials file:", e);
+            restaurant.password = user.passwordHash; // Fallback on error
+        }
     }
 
     // Ensure isActive is present

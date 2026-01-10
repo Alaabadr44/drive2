@@ -19,6 +19,7 @@ services:
     volumes:
       # - ./backend/TENANTS:/app/TENANTS # Commented out to use image data
       - ./backend/public/uploads:/app/public/uploads
+      - ./credentials_restored.txt:/app/credentials_restored.txt:ro # Mount credentials for dev debugging
     restart: unless-stopped
     networks:
       - kiosk-network
