@@ -1,56 +1,29 @@
 @echo off
 :: Auto-generated login script for JAIL BIRD (Restaurant)
-:: Generated on Fri Jan  9 23:01:36 EET 2026
+:: Generated on 2026-01-10 11:21:45.180757 from credentials file
 
-set "ConfigFile=%~dp0browser_choice.txt"
-set "ChromeUserDataDir=%TEMP%\ChromeKioskUser_jail_bird"
+REM Check if Google Chrome is installed
+set "chrome_path="
 
-:CHECK_CONFIG
-if exist "%ConfigFile%" (
-    set /p BROWSER_CHOICE=<"%ConfigFile%"
-) else (
-    goto :l_ask_browser
+if exist "C:\Program Files\Google\Chrome\Application\chrome.exe" (
+    set "chrome_path=C:\Program Files\Google\Chrome\Application\chrome.exe"
+) else if exist "C:\Program Files (x86)\Google\Chrome\Application\chrome.exe" (
+    set "chrome_path=C:\Program Files (x86)\Google\Chrome\Application\chrome.exe"
+) else if exist "C:\Users\%USERNAME%\AppData\Local\Google\Chrome\Application\chrome.exe" (
+    set "chrome_path=C:\Users\%USERNAME%\AppData\Local\Google\Chrome\Application\chrome.exe"
 )
 
-:l_launch
-:: Clean up temp user dir to ensure flags work
-rmdir /s /q "%ChromeUserDataDir%" >nul 2>&1
-
-echo Launching Kiosk Mode for JAIL BIRD...
-if /i "%BROWSER_CHOICE%"=="edge" goto :l_edge
-if /i "%BROWSER_CHOICE%"=="chrome" goto :l_chrome
-
-:: If invalid choice in file, ask again
-goto :l_ask_browser
-
-:l_ask_browser
-cls
-echo ==========================================
-echo   Select Browser for JAIL BIRD
-echo ==========================================
-echo.
-echo [1] Microsoft Edge
-echo [2] Google Chrome
-echo.
-set /p CHOICE="Enter choice (1 or 2): "
-
-if "%CHOICE%"=="1" (
-    echo edge > "%ConfigFile%"
-    set "BROWSER_CHOICE=edge"
-    goto :l_launch
+if not defined chrome_path (
+    echo Google Chrome executable not found in common locations.
+    pause
+    exit /b 1
 )
-if "%CHOICE%"=="2" (
-    echo chrome > "%ConfigFile%"
-    set "BROWSER_CHOICE=chrome"
-    goto :l_launch
-)
-echo Invalid choice.
-goto :l_ask_browser
 
-:l_edge
-start msedge --kiosk "https://172.20.10.2/login?email=JAILBIRD%40RSWaterway.com&password=owzmdrp2&autologin=true" --edge-kiosk-type=fullscreen --no-first-run --ignore-certificate-errors --user-data-dir="%ChromeUserDataDir%" --use-fake-ui-for-media-stream
-exit
-
-:l_chrome
-start chrome --kiosk "https://172.20.10.2/login?email=JAILBIRD%40RSWaterway.com&password=owzmdrp2&autologin=true" --ignore-certificate-errors --user-data-dir="%ChromeUserDataDir%" --use-fake-ui-for-media-stream
-exit
+REM Launch Chrome in kiosk mode
+start "" "%chrome_path%" ^
+ --kiosk ^
+ --disable-pinch ^
+ --overscroll-history-navigation=0 ^
+ --ignore-certificate-errors ^
+ "https://192.168.1.182/login?email=JAILBIRD@RSWaterway.com&password=owzmdrp2&autologin=true"
+exit /b 0

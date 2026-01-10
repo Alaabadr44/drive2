@@ -1,6 +1,6 @@
 @echo off
-:: Auto-generated login script for LYCHTEE (Restaurant)
-:: Generated on 2026-01-10 11:21:45.180857 from credentials file
+:: Auto-generated login script for Screen 3 (Screen)
+:: Generated on 2026-01-10 11:21:45.179472 from credentials file
 
 REM Check if Google Chrome is installed
 set "chrome_path="
@@ -25,5 +25,5 @@ start "" "%chrome_path%" ^
  --disable-pinch ^
  --overscroll-history-navigation=0 ^
  --ignore-certificate-errors ^
- "https://192.168.1.182/login?email=LYCHTEE@RSWaterway.com&password=h1avbdw8&autologin=true"
+ "https://192.168.1.182/login?email=line3@waterway.com&password=12345678&autologin=true"
 exit /b 0

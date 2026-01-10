@@ -3,10 +3,7 @@
 # Configuration
 BASE_URL="$1"
 OUTPUT_DIR="generated_scripts"
-DB_CONTAINER="drive2-postgres-1" # Default, can be overridden or found dynamically
-DB_USER="postgres"
-DB_NAME="kiosk_db"
-SCREEN_PASSWORD="12345678"
+CREDENTIALS_FILE="credentials_restored.txt"
 
 # Check arguments
 if [ -z "$BASE_URL" ]; then
@@ -20,134 +17,65 @@ CLEAN_BASE_URL=${BASE_URL%/}
 # Ensure output directory exists
 mkdir -p "$OUTPUT_DIR"
 echo "Generating scripts in: $OUTPUT_DIR"
+echo "Reading credentials from: $CREDENTIALS_FILE"
 
-# Define Password Map Function
-get_restaurant_password() {
-    local name="$1"
-    case "$name" in
-        "DAILY DOSE") echo "u94x3n07" ;;
-        "DARS") echo "wg3or7ne" ;;
-        "HOWLIN BIRDS") echo "4iua4ubh" ;;
-        "JAIL BIRD") echo "owzmdrp2" ;;
-        "LYCHTEE") echo "h1avbdw8" ;;
-        "MAINE") echo "gsuiypk9" ;;
-        "MEAT BARTY") echo "h5qwpngl" ;;
-        "NUDE BAKERY") echo "qh55mpqm" ;;
-        "PAO") echo "qnb7z9ks" ;;
-        "SAINTS") echo "uppdvje3" ;;
-        *) echo "CHANGE_ME" ;;
-    esac
-}
-
-# Fetch Users from Database
-# We use docker exec to run psql. We assume the container is running.
-# We fetch: email, role, username, restaurant.nameEn, screen.name
-echo "Fetching users from database..."
-
-# Try to find the actual container name if using compose
-AUTO_CONTAINER=$(docker ps --format "{{.Names}}" | grep postgres | head -n 1)
-if [ ! -z "$AUTO_CONTAINER" ]; then
-    DB_CONTAINER="$AUTO_CONTAINER"
-fi
-
-echo "Using DB Container: $DB_CONTAINER"
-
-# SQL Query
-# Note: TypeORM usually names tables as "user", "restaurant", "screen".
-# Quotation marks around "user" are critical because it's a reserved word.
-SQL_QUERY="COPY (
-  SELECT 
-    u.email, 
-    u.role, 
-    u.username, 
-    COALESCE(r.\"nameEn\", '') as r_name, 
-    COALESCE(s.name, '') as s_name 
-  FROM \"user\" u 
-  LEFT JOIN restaurant r ON u.\"restaurantId\" = r.id 
-  LEFT JOIN screen s ON u.\"screenId\" = s.id 
-  WHERE u.role IN ('RESTAURANT', 'SCREEN')
-) TO STDOUT WITH CSV HEADER;"
-
-# Read line by line
-# We use a while loop processing the output of the docker command
-# We use ' || true' to prevent script exit if docker command fails deeply, though we should handle it.
-QUERY_OUTPUT=$(docker exec -i "$DB_CONTAINER" psql -U "$DB_USER" -d "$DB_NAME" -c "$SQL_QUERY")
-
-if [ $? -ne 0 ]; then
-    echo "❌ Failed to connect to database or execute query."
-    echo "Make sure the database container is running."
+if [ ! -f "$CREDENTIALS_FILE" ]; then
+    echo "❌ Credentials file not found at $CREDENTIALS_FILE"
     exit 1
 fi
 
-# Process the CSV output
-echo "$QUERY_OUTPUT" | while IFS=',' read -r email role username r_name s_name; do
-    # Skip header
-    if [[ "$email" == "email" ]]; then continue; fi
+# Python script to parse and generate
+python3 -c "
+import sys
+import os
+import re
+import urllib.parse
+from datetime import datetime
+
+base_url = sys.argv[1]
+out_dir = sys.argv[2]
+cred_file = sys.argv[3]
+
+def clean_filename(name):
+    # Lowercase, replace non-alphanum with _
+    return re.sub(r'[^a-z0-9]', '_', name.lower())
+
+def generate_bat(type_, name, email, password):
+    if not email or not password:
+        return
+
+    safe_name = clean_filename(name)
+    # Handle 'Screen 1' -> 'Screen_line_1' mapping if needed, or just use 'Screen 1'
+    # DB used 'line 1'. File uses 'Screen 1'. 
+    # Let's clean the name as is. 'Screen 1' -> 'screen_1'
     
-    # Remove carriage returns if any (from docker output)
-    email=$(echo "$email" | tr -d '\r')
-    role=$(echo "$role" | tr -d '\r')
-    username=$(echo "$username" | tr -d '\r')
-    r_name=$(echo "$r_name" | tr -d '\r')
-    s_name=$(echo "$s_name" | tr -d '\r')
-
-    # Basic cleaning of CSV quotes if present (psql CSV might add quotes)
-    # This simple parsing assumes no commas INSIDE the fields, which is safe for these specific fields (names/emails).
-    # true CSV parsing in bash is hard, but we can rely on our specific data structure.
-
-    PASSWORD=""
-    NAME=""
-    TYPE=""
-
-    if [[ "$role" == "SCREEN" ]]; then
-        PASSWORD="$SCREEN_PASSWORD"
-        NAME="${s_name}"
-        if [ -z "$NAME" ]; then NAME="$username"; fi
-        TYPE="Screen"
-    elif [[ "$role" == "RESTAURANT" ]]; then
-        NAME="${r_name}"
-        if [ -z "$NAME" ]; then NAME="$username"; fi
-        PASSWORD=$(get_restaurant_password "$NAME")
-        TYPE="Restaurant"
-    fi
-
-    # Sanitize Filename: lowercase, replace non-alphanum with _
-    SAFE_NAME=$(echo "$NAME" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/_/g')
-    FILENAME="${TYPE}_${SAFE_NAME}.bat"
-    FILEPATH="$OUTPUT_DIR/$FILENAME"
-
-    # URL Encoding (Basic bash implementation)
-    # Python is usually available on Mac/Linux, used for reliable encoding
-    encode_uri() {
-        # Fallback to python if possible, or simple sed
-        # Using python3 for reliability
-        python3 -c "import urllib.parse; print(urllib.parse.quote('''$1'''))" 2>/dev/null || \
-        echo "$1" # Fallback if python missing (unsafe but usually works for simple emails)
-    }
-
-    EMAIL_ENC=$(encode_uri "$email")
-    PASS_ENC=$(encode_uri "$PASSWORD")
+    filename = f'{type_}_{safe_name}.bat'
     
-    LOGIN_URL="${CLEAN_BASE_URL}/login?email=${EMAIL_ENC}&password=${PASS_ENC}&autologin=true"
-
-    # Generate BAT Content
-    # Using 'cat <<EOF' to variable
+    # URL Encode
+    # Keep @ unencoded for cleaner URLs, browsers handle it.
+    email_enc = urllib.parse.quote(email, safe='@')
+    pass_enc = urllib.parse.quote(password)
     
-    cat > "$FILEPATH" <<EOF
-@echo off
-:: Auto-generated login script for ${NAME} (${TYPE})
-:: Generated on $(date)
+    login_url = f'{base_url}/login?email={email_enc}&password={pass_enc}&autologin=true'
+    
+    # ESCAPE % for Windows Batch
+    # Batch interprets %40 as a variable. We need %%40.
+    # We replace ALL % with %% to handle any encoded chars (like %20 for space) safely.
+    login_url_bat = login_url.replace('%', '%%')
+    
+    content = rf'''@echo off
+:: Auto-generated login script for {name} ({type_})
+:: Generated on {datetime.now()} from credentials file
 
 REM Check if Google Chrome is installed
+set \"chrome_path=\"
 
-set "chrome_path="
-
-if exist "C:\Program Files\Google\Chrome\Application\chrome.exe" (
-    set "chrome_path=C:\Program Files\Google\Chrome\Application\chrome.exe"
-) else if exist "C:\Program Files (x86)\Google\Chrome\Application\chrome.exe" (
-    set "chrome_path=C:\Program Files (x86)\Google\Chrome\Application\chrome.exe"
-) else if exist "C:\Users\%USERNAME%\AppData\Local\Google\Chrome\Application\chrome.exe" (
-    set "chrome_path=C:\Users\%USERNAME%\AppData\Local\Google\Chrome\Application\chrome.exe"
+if exist \"C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe\" (
+    set \"chrome_path=C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe\"
+) else if exist \"C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe\" (
+    set \"chrome_path=C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe\"
+) else if exist \"C:\\Users\\%USERNAME%\\AppData\\Local\\Google\\Chrome\\Application\\chrome.exe\" (
+    set \"chrome_path=C:\\Users\\%USERNAME%\\AppData\\Local\\Google\\Chrome\\Application\\chrome.exe\"
 )
 
 if not defined chrome_path (
@@ -156,19 +84,56 @@ if not defined chrome_path (
     exit /b 1
 )
 
-REM Launch Chrome in kiosk mode with touch gesture fixes
-start "" "%chrome_path%" ^
+REM Launch Chrome in kiosk mode
+start \"\" \"%chrome_path%\" ^
  --kiosk ^
  --disable-pinch ^
  --overscroll-history-navigation=0 ^
  --ignore-certificate-errors ^
- "${LOGIN_URL}"
+ \"{login_url_bat}\"
 exit /b 0
-EOF
+'''
+    
+    with open(os.path.join(out_dir, filename), 'w') as f:
+        f.write(content)
+    print(f'✅ Generated: {filename}')
 
-    echo "✅ Generated: $FILENAME"
+current_type = None
+current_name = None
+current_email = None
+current_pass = None
 
-done
+with open(cred_file, 'r') as f:
+    for line in f:
+        line = line.strip()
+        if not line:
+             # End of block, generate if data exists
+            if current_type and current_name and current_email and current_pass:
+                generate_bat(current_type, current_name, current_email, current_pass)
+                # Reset sensitive fields, keep type if needed or reset all
+                current_name = None
+                current_email = None
+                current_pass = None
+            continue
+            
+        if line.startswith('Screen '):
+            # Format: 'Screen 1:'
+            current_type = 'Screen'
+            current_name = line.replace(':', '').strip()
+        elif line.startswith('Restaurant:'):
+            # Format: 'Restaurant: DAILY DOSE'
+            current_type = 'Restaurant'
+            current_name = line.split(':', 1)[1].strip()
+        elif line.startswith('Email:'):
+            current_email = line.split(':', 1)[1].strip()
+        elif line.startswith('Password:'):
+            current_pass = line.split(':', 1)[1].strip()
+
+    # Handle last block if file doesn't end with empty line
+    if current_type and current_name and current_email and current_pass:
+        generate_bat(current_type, current_name, current_email, current_pass)
+
+" "$CLEAN_BASE_URL" "$OUTPUT_DIR" "$CREDENTIALS_FILE"
 
 echo ""
-echo "🎉 Successfully generated scripts."
+echo "🎉 Successfully generated scripts from text file."
