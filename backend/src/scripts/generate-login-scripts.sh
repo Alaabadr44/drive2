@@ -138,19 +138,32 @@ echo "$QUERY_OUTPUT" | while IFS=',' read -r email role username r_name s_name; 
 :: Auto-generated login script for ${NAME} (${TYPE})
 :: Generated on $(date)
 
-set "ConfigFile=%~dp0browser_choice.txt"
-set "ChromeUserDataDir=%TEMP%\\ChromeKioskUser_${SAFE_NAME}"
+REM Check if Google Chrome is installed
 
-:: Default to Chrome
-goto :l_chrome
+set "chrome_path="
 
-:l_edge
-start msedge --kiosk "${LOGIN_URL}" --edge-kiosk-type=fullscreen --no-first-run --ignore-certificate-errors --user-data-dir="%ChromeUserDataDir%" --use-fake-ui-for-media-stream
-exit
+if exist "C:\Program Files\Google\Chrome\Application\chrome.exe" (
+    set "chrome_path=C:\Program Files\Google\Chrome\Application\chrome.exe"
+) else if exist "C:\Program Files (x86)\Google\Chrome\Application\chrome.exe" (
+    set "chrome_path=C:\Program Files (x86)\Google\Chrome\Application\chrome.exe"
+) else if exist "C:\Users\%USERNAME%\AppData\Local\Google\Chrome\Application\chrome.exe" (
+    set "chrome_path=C:\Users\%USERNAME%\AppData\Local\Google\Chrome\Application\chrome.exe"
+)
 
-:l_chrome
-start chrome --kiosk "${LOGIN_URL}" --ignore-certificate-errors --user-data-dir="%ChromeUserDataDir%" --use-fake-ui-for-media-stream
-exit
+if not defined chrome_path (
+    echo Google Chrome executable not found in common locations.
+    pause
+    exit /b 1
+)
+
+REM Launch Chrome in kiosk mode with touch gesture fixes
+start "" "%chrome_path%" ^
+ --kiosk ^
+ --disable-pinch ^
+ --overscroll-history-navigation=0 ^
+ --ignore-certificate-errors ^
+ "${LOGIN_URL}"
+exit /b 0
 EOF
 
     echo "✅ Generated: $FILENAME"
