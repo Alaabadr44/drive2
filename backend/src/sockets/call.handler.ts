@@ -329,6 +329,19 @@ export const registerCallHandlers = (socket: Socket) => {
       }
   });
 
+  socket.on('queue:leave', async (data: { restaurantId: string }) => {
+      try {
+          const screenId = (socket as any).screenId;
+          if (screenId && data.restaurantId) {
+             console.log(`[SOCKET] 🚫 Screen ${screenId} left queue for Restaurant ${data.restaurantId}`);
+             const queueService = new (require('../services/queue.service').QueueService)();
+             await queueService.removeFromQueue(data.restaurantId, screenId);
+          }
+      } catch (error) {
+          console.error("Error leaving queue", error);
+      }
+  });
+
   socket.on('webrtc:signal', (data: { targetId: string; targetType: 'screen' | 'restaurant'; type: string; payload: any, callId: string }) => {
       const room = data.targetType === 'screen' ? `screen-${data.targetId}` : `restaurant-${data.targetId}`;
       console.log(`[SOCKET] 📶 WebRTC Signal (${data.type}) from ${socket.id} -> ${room}`);

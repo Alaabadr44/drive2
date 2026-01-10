@@ -458,6 +458,15 @@ export const CallProvider = ({ children }: { children: ReactNode }) => {
 
   const endCall = () => {
     console.log("CallContext: endCall triggered", { callId, callState, socketConnected: socket?.connected });
+    
+    // Handle Queue Cancellation
+    if (callState === 'queued' && activeRestaurant && socket) {
+        console.log("CallContext: Leaving queue for", activeRestaurant.id);
+        socket.emit('queue:leave', { restaurantId: activeRestaurant.id });
+        cleanupCall();
+        return;
+    }
+
     if (!socket || !callId) {
         console.warn("CallContext: Cannot emit call:end (missing socket or callId). performing local cleanup.");
         cleanupCall();
